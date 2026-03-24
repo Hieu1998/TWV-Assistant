@@ -1,0 +1,28 @@
+export type CustomerStatus = 'Tiềm năng' | 'Đang tư vấn' | 'Đã chốt' | 'Hậu phẫu';
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  service: string;
+  status: CustomerStatus;
+  notes: string;
+  createdAt: string;
+  startDate?: string;
+  appointments?: string[]; // Array of dates
+  dischargeDate?: string;
+  totalCost?: string;
+}
+
+export type AppointmentType = 'Tư vấn' | 'Phẫu thuật/Làm dịch vụ' | 'Tái khám' | 'Cắt chỉ';
+
+export interface Appointment {
+  id: string;
+  customerId: string;
+  customerName: string;
+  date: string; // ISO string YYYY-MM-DD
+  time: string; // HH:mm
+  type: AppointmentType;
+  status: 'Chờ khám' | 'Đã xong' | 'Hủy';
+  notes: string;
+}
