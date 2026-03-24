@@ -79,20 +79,20 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý Khách hàng 👥</h1>
-          <p className="text-gray-500 mt-2">Theo dõi và chăm sóc khách hàng theo từng giai đoạn.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Quản lý Khách hàng 👥</h1>
+          <p className="text-gray-500 dark:text-zinc-400 mt-2">Theo dõi và chăm sóc khách hàng theo từng giai đoạn.</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="bg-rose-600 hover:bg-rose-700 text-white">
           <Plus className="w-4 h-4 mr-2" /> Thêm khách hàng
         </Button>
       </div>
 
-      <div className="flex items-center space-x-2 bg-white p-2 rounded-lg border border-gray-200 w-full max-w-md">
-        <Search className="w-5 h-5 text-gray-400 ml-2" />
+      <div className="flex items-center space-x-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-gray-200 dark:border-zinc-800 w-full max-w-md">
+        <Search className="w-5 h-5 text-gray-400 dark:text-zinc-500 ml-2" />
         <input 
           type="text" 
           placeholder="Tìm kiếm theo tên hoặc số điện thoại..." 
-          className="flex-1 outline-none text-sm p-1"
+          className="flex-1 outline-none text-sm p-1 bg-transparent text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -100,49 +100,49 @@ export default function Customers() {
 
       <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 xl:grid-cols-4">
         {statuses.map(status => (
-          <div key={status} className="bg-gray-50/50 rounded-xl p-4 border border-gray-100 min-w-[85vw] sm:min-w-[300px] md:min-w-0 snap-center shrink-0">
-            <h3 className="font-semibold text-gray-700 mb-4 flex items-center justify-between">
+          <div key={status} className="bg-gray-50/50 dark:bg-zinc-900/50 rounded-xl p-4 border border-gray-100 dark:border-zinc-800 min-w-[85vw] sm:min-w-[300px] md:min-w-0 snap-center shrink-0">
+            <h3 className="font-semibold text-gray-700 dark:text-zinc-300 mb-4 flex items-center justify-between">
               {status}
-              <span className="bg-white text-xs py-1 px-2 rounded-full border border-gray-200">
+              <span className="bg-white dark:bg-zinc-800 text-xs py-1 px-2 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300">
                 {filteredCustomers.filter(c => c.status === status).length}
               </span>
             </h3>
             <div className="space-y-3">
               {filteredCustomers.filter(c => c.status === status).map(customer => (
-                <Card key={customer.id} className="shadow-sm border-rose-100/50 hover:border-rose-300 transition-colors cursor-pointer" onClick={() => setEditingCustomer(customer)}>
+                <Card key={customer.id} className="shadow-sm border-rose-100/50 dark:border-zinc-800 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors cursor-pointer bg-white dark:bg-zinc-950" onClick={() => setEditingCustomer(customer)}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
-                      <div className="font-medium text-gray-900">{customer.name}</div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-rose-600" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}>
+                      <div className="font-medium text-gray-900 dark:text-zinc-100">{customer.name}</div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}>
                         <Edit className="h-3 w-3" />
                       </Button>
                     </div>
-                    <div className="text-sm text-gray-500 flex items-center mt-1">
+                    <div className="text-sm text-gray-500 dark:text-zinc-400 flex items-center mt-1">
                       <Phone className="w-3 h-3 mr-1" /> {customer.phone}
                     </div>
-                    <div className="text-sm text-rose-600 mt-2 font-medium bg-rose-50 inline-block px-2 py-0.5 rounded">
+                    <div className="text-sm text-rose-600 dark:text-rose-400 mt-2 font-medium bg-rose-50 dark:bg-rose-500/10 inline-block px-2 py-0.5 rounded">
                       {customer.service || 'Chưa rõ dịch vụ'}
                     </div>
                     
                     {(customer.startDate || customer.totalCost) && (
                       <div className="mt-2 space-y-1">
                         {customer.startDate && (
-                          <div className="text-xs text-gray-600 flex items-center">
+                          <div className="text-xs text-gray-600 dark:text-zinc-400 flex items-center">
                             <CalendarIcon className="w-3 h-3 mr-1" /> Bắt đầu: {format(new Date(customer.startDate), 'dd/MM/yyyy')}
                           </div>
                         )}
                         {customer.totalCost && (
-                          <div className="text-xs text-green-600 flex items-center font-medium">
+                          <div className="text-xs text-green-600 dark:text-green-400 flex items-center font-medium">
                             <DollarSign className="w-3 h-3 mr-1" /> {customer.totalCost}
                           </div>
                         )}
                       </div>
                     )}
                     
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
                       {status !== 'Hậu phẫu' && (
                         <select 
-                          className="text-xs border border-gray-200 rounded p-1 bg-white outline-none text-gray-700"
+                          className="text-xs border border-gray-200 dark:border-zinc-700 rounded p-1 bg-white dark:bg-zinc-900 outline-none text-gray-700 dark:text-zinc-300"
                           value={customer.status}
                           onChange={(e) => handleStatusChange(customer.id, e.target.value as any)}
                         >
@@ -150,7 +150,7 @@ export default function Customers() {
                         </select>
                       )}
                       {status === 'Hậu phẫu' && (
-                        <span className="text-xs text-green-600 flex items-center font-medium">
+                        <span className="text-xs text-green-600 dark:text-green-400 flex items-center font-medium">
                           <CheckCircle className="w-3 h-3 mr-1" /> Đang chăm sóc
                         </span>
                       )}
@@ -231,8 +231,8 @@ export default function Customers() {
                 </select>
               </div>
               
-              <div className="pt-4 border-t border-gray-100">
-                <h4 className="font-medium text-sm text-gray-900 mb-3">Thông tin dịch vụ</h4>
+              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                <h4 className="font-medium text-sm text-gray-900 dark:text-zinc-100 mb-3">Thông tin dịch vụ</h4>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Ngày bắt đầu làm</Label>
@@ -301,11 +301,11 @@ export default function Customers() {
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto">
-              <p className="text-gray-600 text-sm">
-                Khách hàng <strong>{confirmScheduleModal.customer.name}</strong> vừa chuyển sang giai đoạn Hậu phẫu. 
+              <p className="text-gray-600 dark:text-zinc-400 text-sm">
+                Khách hàng <strong className="text-gray-900 dark:text-zinc-100">{confirmScheduleModal.customer.name}</strong> vừa chuyển sang giai đoạn Hậu phẫu. 
                 Hệ thống sẽ tự động tạo lịch tái khám:
               </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-900 p-3 rounded-lg border border-gray-100 dark:border-zinc-800">
                 <li>• <strong>Ngày 1:</strong> Hút dịch / Kiểm tra</li>
                 <li>• <strong>Ngày 7:</strong> Cắt chỉ</li>
                 <li>• <strong>1 Tháng:</strong> Tái khám định kỳ</li>

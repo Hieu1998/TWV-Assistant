@@ -20,44 +20,44 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Chào buổi sáng, Trợ lý! 🌸</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">Hôm nay bạn có <strong className="text-rose-600 dark:text-rose-400">{pendingAppts.length} lịch hẹn</strong> cần xử lý và <strong className="text-rose-600 dark:text-rose-400">{newLeads.length} khách hàng tiềm năng</strong> cần tư vấn.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Chào buổi sáng, Trợ lý! 🌸</h1>
+        <p className="text-gray-500 dark:text-zinc-400 mt-2">Hôm nay bạn có <strong className="text-rose-600 dark:text-rose-400">{pendingAppts.length} lịch hẹn</strong> cần xử lý và <strong className="text-rose-600 dark:text-rose-400">{newLeads.length} khách hàng tiềm năng</strong> cần tư vấn.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-gray-800 cursor-pointer" onClick={() => navigate('/appointments')}>
+        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-zinc-800 cursor-pointer" onClick={() => navigate('/appointments')}>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-rose-700 dark:text-rose-300 text-lg">
+            <CardTitle className="flex items-center text-rose-700 dark:text-rose-400 text-lg">
               <CalendarClock className="w-5 h-5 mr-2" />
               Lịch hẹn hôm nay
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{todaysAppts.length}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-zinc-100">{todaysAppts.length}</div>
             <CardDescription className="mt-1">
               {pendingAppts.length} chờ khám • {todaysAppts.length - pendingAppts.length} đã xong/hủy
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-gray-800 cursor-pointer" onClick={() => navigate('/customers')}>
+        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-zinc-800 cursor-pointer" onClick={() => navigate('/customers')}>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-rose-700 dark:text-rose-300 text-lg">
+            <CardTitle className="flex items-center text-rose-700 dark:text-rose-400 text-lg">
               <Users className="w-5 h-5 mr-2" />
               Khách hàng mới
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{newLeads.length}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-zinc-100">{newLeads.length}</div>
             <CardDescription className="mt-1">
               Đang ở trạng thái Tiềm năng
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-gray-800 cursor-pointer" onClick={() => navigate('/post-generator')}>
+        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-zinc-800 cursor-pointer" onClick={() => navigate('/post-generator')}>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-rose-700 dark:text-rose-300 text-lg">
+            <CardTitle className="flex items-center text-rose-700 dark:text-rose-400 text-lg">
               <PenTool className="w-5 h-5 mr-2" />
               Viết bài Marketing
             </CardTitle>
@@ -69,9 +69,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-gray-800 cursor-pointer" onClick={() => navigate('/consultation')}>
+        <Card className="hover:shadow-md transition-shadow border-rose-100 dark:border-zinc-800 cursor-pointer" onClick={() => navigate('/consultation')}>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-rose-700 dark:text-rose-300 text-lg">
+            <CardTitle className="flex items-center text-rose-700 dark:text-rose-400 text-lg">
               <MessageCircleHeart className="w-5 h-5 mr-2" />
               Tư vấn Khách hàng
             </CardTitle>
@@ -95,26 +95,26 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {todaysAppts.length === 0 ? (
-              <div className="text-center py-6 text-gray-500 dark:text-gray-400">Không có lịch hẹn nào hôm nay.</div>
+              <div className="text-center py-6 text-gray-500 dark:text-zinc-400">Không có lịch hẹn nào hôm nay.</div>
             ) : (
               <div className="space-y-4 mt-4">
                 {todaysAppts.slice(0, 5).map(appt => (
-                  <div key={appt.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <div key={appt.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/30 rounded-lg border border-gray-100 dark:border-zinc-800/50">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                      <div className={`p-2 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-200 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400' : 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
                         <Clock className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100">{appt.time} - {appt.customerName}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{appt.type}</div>
+                        <div className="font-medium text-gray-900 dark:text-zinc-100">{appt.time} - {appt.customerName}</div>
+                        <div className="text-xs text-gray-500 dark:text-zinc-400">{appt.type}</div>
                       </div>
                     </div>
                     {appt.status === 'Chờ khám' ? (
-                      <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded-full">Chờ khám</span>
+                      <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded-full">Chờ khám</span>
                     ) : appt.status === 'Đã xong' ? (
-                      <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center"><CheckCircle className="w-3 h-3 mr-1"/> Đã xong</span>
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full flex items-center"><CheckCircle className="w-3 h-3 mr-1"/> Đã xong</span>
                     ) : (
-                      <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Đã hủy</span>
+                      <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full">Đã hủy</span>
                     )}
                   </div>
                 ))}
@@ -130,16 +130,16 @@ export default function Dashboard() {
           <CardContent>
             <ul className="space-y-4">
               <li className="flex items-start">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">1</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300"><strong>Đồng cảm trước, giải thích sau:</strong> Khi khách chê đắt, hãy đồng cảm "Dạ em hiểu băn khoăn của chị...", sau đó mới phân tích giá trị.</span>
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">1</span>
+                <span className="text-sm text-gray-700 dark:text-zinc-300"><strong>Đồng cảm trước, giải thích sau:</strong> Khi khách chê đắt, hãy đồng cảm "Dạ em hiểu băn khoăn của chị...", sau đó mới phân tích giá trị.</span>
               </li>
               <li className="flex items-start">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">2</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300"><strong>Gửi hình ảnh feedback thực tế:</strong> Hình ảnh khách hàng có tình trạng tương tự trước và sau khi làm là vũ khí tốt nhất.</span>
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">2</span>
+                <span className="text-sm text-gray-700 dark:text-zinc-300"><strong>Gửi hình ảnh feedback thực tế:</strong> Hình ảnh khách hàng có tình trạng tương tự trước và sau khi làm là vũ khí tốt nhất.</span>
               </li>
               <li className="flex items-start">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">3</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300"><strong>Tạo sự khan hiếm:</strong> "Chương trình ưu đãi chỉ còn 2 suất cho khách đặt cọc hôm nay..."</span>
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold mr-3 shrink-0">3</span>
+                <span className="text-sm text-gray-700 dark:text-zinc-300"><strong>Tạo sự khan hiếm:</strong> "Chương trình ưu đãi chỉ còn 2 suất cho khách đặt cọc hôm nay..."</span>
               </li>
             </ul>
           </CardContent>

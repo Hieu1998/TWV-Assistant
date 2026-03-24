@@ -68,8 +68,8 @@ export default function Consultation() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Tư vấn Khách hàng & Xử lý Từ chối 💬</h1>
-        <p className="text-gray-500 mt-2">Tạo kịch bản trả lời tin nhắn khéo léo, tăng tỷ lệ chốt sale.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Tư vấn Khách hàng & Xử lý Từ chối 💬</h1>
+        <p className="text-gray-500 dark:text-zinc-400 mt-2">Tạo kịch bản trả lời tin nhắn khéo léo, tăng tỷ lệ chốt sale.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -95,7 +95,7 @@ export default function Consultation() {
                 <Label htmlFor="service">Dịch vụ đang tư vấn</Label>
                 <input 
                   id="service" 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
                   placeholder="VD: Nâng mũi, Cắt mí, Phun xăm..." 
                   value={serviceContext}
                   onChange={(e) => setServiceContext(e.target.value)}
@@ -106,7 +106,7 @@ export default function Consultation() {
                 <Label htmlFor="objection">Loại băn khoăn chính</Label>
                 <select 
                   id="objection"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
                   value={objectionType}
                   onChange={(e) => setObjectionType(e.target.value)}
                 >
@@ -147,7 +147,7 @@ export default function Consultation() {
               <CardTitle className="flex items-center justify-between">
                 <span>Gợi ý trả lời</span>
                 {generatedResponse && (
-                  <Button variant="outline" size="sm" onClick={handleCopy} className="text-rose-600 border-rose-200 hover:bg-rose-50">
+                  <Button variant="outline" size="sm" onClick={handleCopy} className="text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20">
                     {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                     {copied ? 'Đã copy' : 'Copy câu trả lời'}
                   </Button>
@@ -156,12 +156,12 @@ export default function Consultation() {
             </CardHeader>
             <CardContent className="flex-1">
               {generatedResponse ? (
-                <div className="bg-rose-50 p-6 rounded-lg border border-rose-100 h-full whitespace-pre-wrap text-gray-800 font-sans leading-relaxed">
+                <div className="bg-rose-50 dark:bg-rose-500/5 p-6 rounded-lg border border-rose-100 dark:border-rose-500/10 h-full whitespace-pre-wrap text-gray-800 dark:text-zinc-300 font-sans leading-relaxed">
                   {generatedResponse}
                 </div>
               ) : (
-                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50/50">
-                  <MessageSquareReply className="h-12 w-12 mb-4 text-gray-300" />
+                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-zinc-500 border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded-lg p-8 text-center bg-gray-50/50 dark:bg-zinc-900/50">
+                  <MessageSquareReply className="h-12 w-12 mb-4 text-gray-300 dark:text-zinc-600" />
                   <p>Nhập tin nhắn của khách và nhấn "Tạo câu trả lời" để nhận gợi ý chốt sale khéo léo.</p>
                 </div>
               )}
