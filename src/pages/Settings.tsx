@@ -9,7 +9,18 @@ import { Customer, Appointment } from '@/src/types';
 import { getSupabaseConfig, setSupabaseConfig, refreshSupabaseClient } from '@/src/lib/supabase';
 
 export default function Settings() {
-  const { customers, appointments, upsertCustomer, upsertAppointment, deleteCustomer, deleteAppointment, setConfigured } = useSupabase();
+  const { 
+    customers, 
+    appointments, 
+    services, 
+    sources, 
+    upsertCustomer, 
+    upsertAppointment, 
+    upsertService, 
+    upsertSource, 
+    clearAllData, 
+    setConfigured 
+  } = useSupabase();
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | 'none', message: string }>({ type: 'none', message: '' });
   
   const config = getSupabaseConfig();
@@ -35,8 +46,10 @@ export default function Settings() {
     const data = {
       customers,
       appointments,
+      services,
+      sources,
       exportDate: new Date().toISOString(),
-      version: '1.0'
+      version: '1.1'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -59,11 +72,28 @@ export default function Settings() {
         const content = e.target?.result as string;
         const data = JSON.parse(content);
 
+        // Import Services
+        if (data.services && Array.isArray(data.services)) {
+          for (const s of data.services) {
+            await upsertService(s);
+          }
+        }
+
+        // Import Sources
+        if (data.sources && Array.isArray(data.sources)) {
+          for (const src of data.sources) {
+            await upsertSource(src);
+          }
+        }
+
+        // Import Customers
         if (data.customers && Array.isArray(data.customers)) {
           for (const c of data.customers) {
             await upsertCustomer(c);
           }
         }
+
+        // Import Appointments
         if (data.appointments && Array.isArray(data.appointments)) {
           for (const a of data.appointments) {
             await upsertAppointment(a);
@@ -82,14 +112,12 @@ export default function Settings() {
 
   const handleClearData = async () => {
     if (window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU TRÊN SUPABASE? Hành động này không thể hoàn tác.')) {
-      for (const c of customers) {
-        await deleteCustomer(c.id);
+      try {
+        await clearAllData();
+        setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
+      } catch (error) {
+        setImportStatus({ type: 'error', message: 'Lỗi khi xoá dữ liệu.' });
       }
-      // Appointments are deleted via cascade in DB usually, but let's be safe if not
-      for (const a of appointments) {
-        await deleteAppointment(a.id);
-      }
-      setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
       setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
     }
   };

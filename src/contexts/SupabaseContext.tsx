@@ -20,6 +20,7 @@ interface SupabaseContextType {
   deleteService: (id: string) => Promise<void>;
   upsertSource: (source: CustomerSource) => Promise<void>;
   deleteSource: (id: string) => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
@@ -95,7 +96,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Supabase client not initialized');
     }
     console.log('Upserting customer:', customer);
-    const { error } = await supabase.from('customers').upsert({
+    const data: any = {
       id: customer.id,
       name: customer.name,
       phone: customer.phone,
@@ -107,7 +108,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       start_date: customer.startDate,
       discharge_date: customer.dischargeDate,
       appointments_dates: customer.appointments
-    });
+    };
+    if (customer.createdAt) {
+      data.created_at = customer.createdAt;
+    }
+    const { error } = await supabase.from('customers').upsert(data);
     if (error) {
       console.error('Error upserting customer:', error);
       throw error;
@@ -132,7 +137,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Supabase client not initialized');
     }
     console.log('Upserting appointment:', appointment);
-    const { error } = await supabase.from('appointments').upsert({
+    const data: any = {
       id: appointment.id,
       customer_id: appointment.customerId,
       customer_name: appointment.customerName,
@@ -142,7 +147,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       status: appointment.status,
       notes: appointment.notes,
       service_name: appointment.serviceName
-    });
+    };
+    if ((appointment as any).createdAt) {
+      data.created_at = (appointment as any).createdAt;
+    }
+    const { error } = await supabase.from('appointments').upsert(data);
     if (error) {
       console.error('Error upserting appointment:', error);
       throw error;
@@ -217,6 +226,24 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     await refreshData();
   };
 
+  const clearAllData = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    try {
+      // Delete in order to respect foreign keys if any (though we have cascade)
+      await supabase.from('appointments').delete().neq('id', '0');
+      await supabase.from('customers').delete().neq('id', '0');
+      await supabase.from('services').delete().neq('id', '0');
+      await supabase.from('customer_sources').delete().neq('id', '0');
+      await refreshData();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SupabaseContext.Provider value={{
       customers,
@@ -234,7 +261,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       upsertService,
       deleteService,
       upsertSource,
-      deleteSource
+      deleteSource,
+      clearAllData
     }}>
       {children}
     </SupabaseContext.Provider>
