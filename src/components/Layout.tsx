@@ -95,7 +95,7 @@ export default function Layout() {
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-[#181a1b]/80 dark:backdrop-blur-md border-b border-rose-100 dark:border-[#4a2b2d] flex items-center justify-between px-4 z-40 transition-colors duration-200">
         <div className="flex items-center">
           <Sparkles className="w-5 h-5 text-rose-500 dark:text-rose-400 mr-2" />
-          <span className="font-bold text-lg text-rose-900 dark:text-white">TMV Assistant</span>
+          <span className="font-bold text-lg text-rose-900 dark:text-white">TH Aesthetic</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowApiKeyModal(true)} className="p-2 text-gray-600 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-[#3a2224] rounded-md transition-colors">
@@ -126,7 +126,7 @@ export default function Layout() {
         <div className="h-16 flex items-center justify-between px-6 border-b border-rose-100 dark:border-[#4a2b2d] shrink-0">
           <div className="flex items-center">
             <Sparkles className="w-6 h-6 text-rose-500 dark:text-rose-400 mr-2" />
-            <span className="font-bold text-lg text-rose-900 dark:text-white">TMV Assistant</span>
+            <span className="font-bold text-lg text-rose-900 dark:text-white">TH Aesthetic</span>
           </div>
           <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden p-1 text-gray-500 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-[#3a2224] rounded-md transition-colors">
             <X className="w-5 h-5" />
