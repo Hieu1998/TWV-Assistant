@@ -34,6 +34,7 @@ export default function PostGenerator() {
     
     try {
       const storedKey = localStorage.getItem('gemini_api_key');
+      const storedModel = localStorage.getItem('gemini_api_model') || 'gemini-3-flash-preview';
       const apiKey = storedKey || process.env.GEMINI_API_KEY;
       
       if (!apiKey) {
@@ -63,14 +64,18 @@ export default function PostGenerator() {
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
+        model: storedModel,
         contents: prompt,
       });
 
       setGeneratedPost(response.text || 'Không thể tạo nội dung. Vui lòng thử lại.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating post:', error);
-      setGeneratedPost('Đã xảy ra lỗi khi kết nối với AI. Vui lòng kiểm tra lại API key hoặc thử lại sau.');
+      if (error.message?.includes('429') || error.message?.includes('Quota exceeded')) {
+        setGeneratedPost('Lỗi: Bạn đã vượt quá giới hạn yêu cầu của API (Quota Exceeded). Vui lòng đợi khoảng 1 phút rồi thử lại.');
+      } else {
+        setGeneratedPost('Đã xảy ra lỗi khi kết nối với AI. Vui lòng kiểm tra lại API key hoặc thử lại sau.');
+      }
     } finally {
       setIsLoading(false);
     }

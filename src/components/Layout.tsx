@@ -29,6 +29,9 @@ export default function Layout() {
     if (saved) return saved;
     return '';
   });
+  const [apiModel, setApiModel] = useState(() => {
+    return localStorage.getItem('gemini_api_model') || 'gemini-3-flash-preview';
+  });
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showBackupReminder, setShowBackupReminder] = useState(false);
   const location = useLocation();
@@ -59,9 +62,11 @@ export default function Layout() {
     }
   }, [apiKey]);
 
-  const handleSaveApiKey = (newKey: string) => {
+  const handleSaveApiKey = (newKey: string, newModel: string) => {
     localStorage.setItem('gemini_api_key', newKey);
+    localStorage.setItem('gemini_api_model', newModel);
     setApiKey(newKey);
+    setApiModel(newModel);
     setShowApiKeyModal(false);
   };
 
@@ -195,6 +200,7 @@ export default function Layout() {
         onSave={handleSaveApiKey} 
         onClose={apiKey ? () => setShowApiKeyModal(false) : undefined}
         currentKey={apiKey}
+        currentModel={apiModel}
       />
     </div>
   );

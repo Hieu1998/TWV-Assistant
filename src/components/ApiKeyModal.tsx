@@ -7,17 +7,20 @@ import { Key, AlertCircle } from 'lucide-react';
 
 interface ApiKeyModalProps {
   isOpen: boolean;
-  onSave: (key: string) => void;
+  onSave: (key: string, model: string) => void;
   onClose?: () => void;
   currentKey?: string;
+  currentModel?: string;
 }
 
-export default function ApiKeyModal({ isOpen, onSave, onClose, currentKey = '' }: ApiKeyModalProps) {
+export default function ApiKeyModal({ isOpen, onSave, onClose, currentKey = '', currentModel = 'gemini-3-flash-preview' }: ApiKeyModalProps) {
   const [key, setKey] = useState(currentKey);
+  const [model, setModel] = useState(currentModel);
 
   useEffect(() => {
     setKey(currentKey);
-  }, [currentKey]);
+    setModel(currentModel);
+  }, [currentKey, currentModel]);
 
   if (!isOpen) return null;
 
@@ -51,13 +54,29 @@ export default function ApiKeyModal({ isOpen, onSave, onClose, currentKey = '' }
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="model-select">Chọn Model AI</Label>
+            <select 
+              id="model-select"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              <option value="gemini-3-flash-preview">Gemini 3 Flash (Nhanh, Quota cao - Khuyên dùng)</option>
+              <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Thông minh hơn, Quota thấp)</option>
+            </select>
+            <p className="text-[10px] text-gray-500 dark:text-rose-300/50">
+              * Nếu gặp lỗi "Quota Exceeded", hãy chuyển sang model Flash.
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             {onClose && (
               <Button variant="outline" onClick={onClose}>Hủy</Button>
             )}
             <Button 
               className="bg-rose-600 hover:bg-rose-700 text-white"
-              onClick={() => onSave(key)}
+              onClick={() => onSave(key, model)}
               disabled={!key.trim()}
             >
               Lưu cấu hình
