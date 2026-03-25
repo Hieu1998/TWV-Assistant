@@ -69,7 +69,7 @@ export default function ContentCalendar() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Kế hoạch Nội dung Tuần 📅</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kế hoạch Nội dung Tuần 📅</h1>
         <p className="text-gray-500 dark:text-zinc-400 mt-2">Gợi ý chủ đề đăng bài mỗi ngày để duy trì tương tác và thu hút khách hàng mới.</p>
       </div>
 
@@ -78,7 +78,7 @@ export default function ContentCalendar() {
           <Card key={index} className={`border ${day.color} hover:shadow-md transition-shadow`}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-bold text-lg text-gray-900 dark:text-zinc-100">{day.day}</span>
+                <span className="font-bold text-lg text-gray-900 dark:text-white">{day.day}</span>
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-white dark:bg-zinc-900 ${day.textColor} border ${day.color}`}>
                   {day.type}
                 </span>
@@ -94,7 +94,7 @@ export default function ContentCalendar() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-200 dark:border-zinc-700"
+                className="w-full bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-900 dark:text-white border-gray-200 dark:border-zinc-700"
                 onClick={() => navigate('/post-generator', { state: { topic: day.topic } })}
               >
                 <PenTool className="w-4 h-4 mr-2" />

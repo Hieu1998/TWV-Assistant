@@ -12,6 +12,7 @@ export interface Customer {
   appointments?: string[]; // Array of dates
   dischargeDate?: string;
   totalCost?: string;
+  source?: string;
 }
 
 export type AppointmentType = 'Tư vấn' | 'Phẫu thuật/Làm dịch vụ' | 'Tái khám' | 'Cắt chỉ';

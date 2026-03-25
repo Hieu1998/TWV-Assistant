@@ -20,7 +20,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Chào buổi sáng, Trợ lý! 🌸</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Chào buổi sáng, Trợ lý! 🌸</h1>
         <p className="text-gray-500 dark:text-zinc-400 mt-2">Hôm nay bạn có <strong className="text-rose-600 dark:text-rose-400">{pendingAppts.length} lịch hẹn</strong> cần xử lý và <strong className="text-rose-600 dark:text-rose-400">{newLeads.length} khách hàng tiềm năng</strong> cần tư vấn.</p>
       </div>
 
@@ -33,7 +33,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900 dark:text-zinc-100">{todaysAppts.length}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{todaysAppts.length}</div>
             <CardDescription className="mt-1">
               {pendingAppts.length} chờ khám • {todaysAppts.length - pendingAppts.length} đã xong/hủy
             </CardDescription>
@@ -48,7 +48,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900 dark:text-zinc-100">{newLeads.length}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{newLeads.length}</div>
             <CardDescription className="mt-1">
               Đang ở trạng thái Tiềm năng
             </CardDescription>
@@ -105,7 +105,7 @@ export default function Dashboard() {
                         <Clock className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-zinc-100">{appt.time} - {appt.customerName}</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{appt.time} - {appt.customerName}</div>
                         <div className="text-xs text-gray-500 dark:text-zinc-400">{appt.type}</div>
                       </div>
                     </div>

@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useLocalStorage } from '@/src/lib/useLocalStorage';
 import { Appointment, Customer } from '@/src/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { Calendar as CalendarIcon, Clock, User, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, Phone, ArrowUp } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
 export default function Appointments() {
@@ -18,7 +18,23 @@ export default function Appointments() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAppt, setNewAppt] = useState({ customerId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '09:00', type: 'Tái khám' as const, notes: '' });
 
+  const listRef = useRef<HTMLDivElement>(null);
+
   const filteredAppts = appointments.filter(a => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
+
+  const scrollToList = () => {
+    if (listRef.current) {
+      listRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleDateSelect = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    const dayAppts = appointments.filter(a => a.date === dateStr);
+    if (dayAppts.length > 0) {
+      setTimeout(scrollToList, 100);
+    }
+  };
 
   const handleAddAppt = () => {
     if (!newAppt.customerId || !newAppt.date) return;
@@ -61,15 +77,15 @@ export default function Appointments() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Lịch hẹn & Tái khám 🗓️</h1>
-          <p className="text-gray-500 dark:text-zinc-400 mt-2">Quản lý lịch khách đến làm dịch vụ và tái khám mỗi ngày.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Lịch hẹn & Tái khám 🗓️</h1>
+          <p className="text-gray-500 dark:text-rose-200 mt-2">Quản lý lịch khách đến làm dịch vụ và tái khám mỗi ngày.</p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="bg-rose-600 hover:bg-rose-700 text-white">
           <Plus className="w-4 h-4 mr-2" /> Thêm lịch hẹn
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 dark:bg-[#181a1b] p-4 rounded-xl">
         <div className="lg:col-span-4">
           <Card>
             <CardHeader>
@@ -87,16 +103,16 @@ export default function Appointments() {
               />
               
               <div className="mt-6 space-y-2">
-                <h4 className="text-sm font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Thống kê ngày {format(parseISO(selectedDate), 'dd/MM/yyyy')}</h4>
-                <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-500 dark:text-rose-300/70 uppercase tracking-wider">Thống kê ngày {format(parseISO(selectedDate), 'dd/MM/yyyy')}</h4>
+                <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg">
                   <span>Tổng lịch hẹn:</span>
                   <span className="font-bold text-lg">{filteredAppts.length}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg">
                   <span>Đã hoàn thành:</span>
                   <span className="font-bold text-lg">{filteredAppts.filter(a => a.status === 'Đã xong').length}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-lg">
                   <span>Chờ khám:</span>
                   <span className="font-bold text-lg">{filteredAppts.filter(a => a.status === 'Chờ khám').length}</span>
                 </div>
@@ -105,14 +121,14 @@ export default function Appointments() {
           </Card>
         </div>
 
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8" ref={listRef}>
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Danh sách khách hàng ({format(parseISO(selectedDate), 'dd/MM/yyyy')})</CardTitle>
             </CardHeader>
             <CardContent>
               {filteredAppts.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 dark:text-zinc-500">
+                <div className="text-center py-12 text-gray-400 dark:text-rose-300/50">
                   <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
                   <p>Không có lịch hẹn nào trong ngày này.</p>
                 </div>
@@ -121,30 +137,30 @@ export default function Appointments() {
                   {filteredAppts.map(appt => {
                     const customer = getCustomerDetails(appt.customerId);
                     return (
-                      <div key={appt.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${appt.status === 'Đã xong' ? 'bg-gray-50 dark:bg-zinc-800/30 border-gray-200 dark:border-zinc-800 opacity-70' : appt.status === 'Hủy' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 opacity-70' : 'bg-white dark:bg-zinc-900 border-rose-100 dark:border-zinc-700 shadow-sm'}`}>
+                      <div key={appt.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${appt.status === 'Đã xong' ? 'bg-gray-50 dark:bg-[#181a1b] border-gray-200 dark:border-[#4a2b2d] opacity-70' : appt.status === 'Hủy' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 opacity-70' : 'bg-white dark:bg-[#181a1b] border-rose-100 dark:border-[#4a2b2d] shadow-sm'}`}>
                         <div className="flex items-start sm:items-center gap-4">
-                          <div className={`p-3 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-200 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400' : 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
+                          <div className={`p-3 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-200 dark:bg-[#181a1b] text-gray-500 dark:text-rose-300/50' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300'}`}>
                             <Clock className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-gray-900 dark:text-zinc-100 text-lg">{appt.time}</h4>
+                              <h4 className="font-bold text-gray-900 dark:text-white text-lg">{appt.time}</h4>
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                appt.type === 'Tái khám' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 
-                                appt.type === 'Cắt chỉ' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 
-                                'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                appt.type === 'Tái khám' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
+                                appt.type === 'Cắt chỉ' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 
+                                'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                               }`}>{appt.type}</span>
-                              {appt.status === 'Đã xong' && <span className="text-xs bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 px-2 py-0.5 rounded-full">Đã xong</span>}
-                              {appt.status === 'Hủy' && <span className="text-xs bg-red-200 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full">Đã hủy</span>}
+                              {appt.status === 'Đã xong' && <span className="text-xs bg-gray-200 dark:bg-[#181a1b] text-gray-700 dark:text-rose-200 px-2 py-0.5 rounded-full">Đã xong</span>}
+                              {appt.status === 'Hủy' && <span className="text-xs bg-red-200 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">Đã hủy</span>}
                             </div>
-                            <div className="flex items-center text-gray-600 dark:text-zinc-400 mt-1">
+                            <div className="flex items-center text-gray-600 dark:text-rose-200 mt-1">
                               <User className="w-4 h-4 mr-1" /> <span className="font-medium">{appt.customerName}</span>
-                              {customer && <span className="ml-2 text-sm text-gray-400 dark:text-zinc-500">({customer.phone})</span>}
+                              {customer && <span className="ml-2 text-sm text-gray-400 dark:text-rose-300/70">({customer.phone})</span>}
                             </div>
                             {customer && customer.service && (
                               <div className="text-xs text-rose-600 dark:text-rose-400 mt-1">Dịch vụ: {customer.service}</div>
                             )}
-                            {appt.notes && <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">{appt.notes}</p>}
+                            {appt.notes && <p className="text-sm text-gray-500 dark:text-rose-300/70 mt-1">{appt.notes}</p>}
                           </div>
                         </div>
                         
@@ -182,9 +198,9 @@ export default function Appointments() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800">
+          <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-[#4a2b2d] rounded-lg overflow-hidden border border-gray-200 dark:border-[#4a2b2d]">
             {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
-              <div key={day} className="bg-gray-50 dark:bg-zinc-900 py-2 text-center text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              <div key={day} className="bg-gray-50 dark:bg-[#181a1b] py-2 text-center text-sm font-semibold text-gray-700 dark:text-rose-200">
                 {day}
               </div>
             ))}
@@ -198,17 +214,17 @@ export default function Appointments() {
               return (
                 <div 
                   key={day.toString()} 
-                  className={`min-h-[60px] md:min-h-[120px] bg-white dark:bg-zinc-950 p-1 md:p-2 cursor-pointer hover:bg-rose-50 dark:hover:bg-zinc-900 transition-colors ${!isCurrentMonth ? 'text-gray-400 dark:text-zinc-600 bg-gray-50/50 dark:bg-zinc-900/50' : ''} ${isSelected ? 'ring-2 ring-inset ring-rose-500 bg-rose-50/30 dark:bg-rose-900/20' : ''}`}
-                  onClick={() => setSelectedDate(dateStr)}
+                  className={`min-h-[60px] md:min-h-[120px] bg-white dark:bg-[#281718] p-1 md:p-2 cursor-pointer hover:bg-rose-50 dark:hover:bg-[#3a2224] transition-colors ${!isCurrentMonth ? 'text-gray-400 dark:text-rose-300/50 bg-gray-50/50 dark:bg-[#181a1b]' : ''} ${isSelected ? 'ring-2 ring-inset ring-rose-500 bg-rose-50/30 dark:bg-rose-900/20' : ''}`}
+                  onClick={() => handleDateSelect(dateStr)}
                 >
-                  <div className={`text-center md:text-right text-sm font-medium mb-1 ${isSameDay(day, new Date()) ? 'text-rose-600 dark:text-rose-400' : 'dark:text-zinc-300'}`}>
+                  <div className={`text-center md:text-right text-sm font-medium mb-1 ${isSameDay(day, new Date()) ? 'text-rose-600 dark:text-rose-400' : 'dark:text-rose-100'}`}>
                     {format(day, 'd')}
                   </div>
                   
                   {/* Mobile indicators */}
                   <div className="md:hidden flex flex-wrap gap-1 justify-center mt-1">
                     {dayAppts.map(appt => (
-                      <div key={appt.id} className={`w-1.5 h-1.5 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-400 dark:bg-zinc-600' : 'bg-rose-500 dark:bg-rose-400'}`} />
+                      <div key={appt.id} className={`w-1.5 h-1.5 rounded-full ${appt.status === 'Đã xong' ? 'bg-gray-400 dark:bg-rose-300/50' : 'bg-rose-500 dark:bg-rose-400'}`} />
                     ))}
                   </div>
 
@@ -217,7 +233,7 @@ export default function Appointments() {
                     {dayAppts.map(appt => {
                       const customer = getCustomerDetails(appt.customerId);
                       return (
-                        <div key={appt.id} className={`text-xs p-1.5 rounded border ${appt.status === 'Đã xong' ? 'bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-zinc-400' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20 text-rose-800 dark:text-rose-300'}`}>
+                        <div key={appt.id} className={`text-xs p-1.5 rounded border ${appt.status === 'Đã xong' ? 'bg-gray-100 dark:bg-[#181a1b] border-gray-200 dark:border-[#4a2b2d] text-gray-500 dark:text-rose-300/70' : 'bg-rose-50 dark:bg-rose-500/20 border-rose-100 dark:border-rose-500/30 text-rose-800 dark:text-rose-200'}`}>
                           <div className="font-semibold">{appt.time} - {appt.type}</div>
                           <div className="truncate font-medium">{appt.customerName}</div>
                           {customer && (
@@ -249,7 +265,7 @@ export default function Appointments() {
               <div className="space-y-2">
                 <Label>Khách hàng *</Label>
                 <select 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
                   value={newAppt.customerId}
                   onChange={e => setNewAppt({...newAppt, customerId: e.target.value})}
                 >
@@ -272,7 +288,7 @@ export default function Appointments() {
               <div className="space-y-2">
                 <Label>Loại lịch hẹn</Label>
                 <select 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
                   value={newAppt.type}
                   onChange={e => setNewAppt({...newAppt, type: e.target.value as any})}
                 >

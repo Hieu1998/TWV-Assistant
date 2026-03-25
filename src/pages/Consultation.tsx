@@ -27,7 +27,12 @@ export default function Consultation() {
     setGeneratedResponse('');
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const storedKey = localStorage.getItem('gemini_api_key');
+      if (!storedKey) {
+        setGeneratedResponse('Vui lòng cấu hình API Key trong phần cài đặt (biểu tượng chìa khóa) để sử dụng tính năng này.');
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey: storedKey });
       const prompt = `
         Bạn là một chuyên viên tư vấn (sales) xuất sắc và tận tâm tại một Thẩm Mỹ Viện uy tín.
         Hãy viết một câu trả lời thuyết phục, khéo léo để phản hồi lại tin nhắn của khách hàng.
@@ -68,11 +73,11 @@ export default function Consultation() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Tư vấn Khách hàng & Xử lý Từ chối 💬</h1>
-        <p className="text-gray-500 dark:text-zinc-400 mt-2">Tạo kịch bản trả lời tin nhắn khéo léo, tăng tỷ lệ chốt sale.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tư vấn Khách hàng & Xử lý Từ chối 💬</h1>
+        <p className="text-gray-500 dark:text-rose-200 mt-2">Tạo kịch bản trả lời tin nhắn khéo léo, tăng tỷ lệ chốt sale.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 dark:bg-[#181a1b] p-4 rounded-xl">
         <div className="lg:col-span-5 space-y-6">
           <Card>
             <CardHeader>
@@ -95,7 +100,7 @@ export default function Consultation() {
                 <Label htmlFor="service">Dịch vụ đang tư vấn</Label>
                 <input 
                   id="service" 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
                   placeholder="VD: Nâng mũi, Cắt mí, Phun xăm..." 
                   value={serviceContext}
                   onChange={(e) => setServiceContext(e.target.value)}
@@ -106,7 +111,7 @@ export default function Consultation() {
                 <Label htmlFor="objection">Loại băn khoăn chính</Label>
                 <select 
                   id="objection"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
                   value={objectionType}
                   onChange={(e) => setObjectionType(e.target.value)}
                 >
@@ -141,7 +146,7 @@ export default function Consultation() {
           </Card>
         </div>
 
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 dark:bg-[#181a1b] rounded-xl">
           <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -156,12 +161,12 @@ export default function Consultation() {
             </CardHeader>
             <CardContent className="flex-1">
               {generatedResponse ? (
-                <div className="bg-rose-50 dark:bg-rose-500/5 p-6 rounded-lg border border-rose-100 dark:border-rose-500/10 h-full whitespace-pre-wrap text-gray-800 dark:text-zinc-300 font-sans leading-relaxed">
+                <div className="bg-rose-50 dark:bg-rose-500/5 p-6 rounded-lg border border-rose-100 dark:border-rose-500/10 h-full whitespace-pre-wrap text-gray-800 dark:text-white font-sans leading-relaxed">
                   {generatedResponse}
                 </div>
               ) : (
-                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-zinc-500 border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded-lg p-8 text-center bg-gray-50/50 dark:bg-zinc-900/50">
-                  <MessageSquareReply className="h-12 w-12 mb-4 text-gray-300 dark:text-zinc-600" />
+                <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-rose-300/70 border-2 border-dashed border-gray-200 dark:border-[#4a2b2d] rounded-lg p-8 text-center bg-gray-50/50 dark:bg-[#181a1b]">
+                  <MessageSquareReply className="h-12 w-12 mb-4 text-gray-300 dark:text-rose-300/50" />
                   <p>Nhập tin nhắn của khách và nhấn "Tạo câu trả lời" để nhận gợi ý chốt sale khéo léo.</p>
                 </div>
               )}
