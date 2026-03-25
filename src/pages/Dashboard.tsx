@@ -1,21 +1,108 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
-import { PenTool, MessageCircleHeart, CalendarDays, Users, CalendarClock, Clock, CheckCircle } from 'lucide-react';
+import { PenTool, MessageCircleHeart, CalendarDays, Users, CalendarClock, Clock, CheckCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/src/lib/useLocalStorage';
 import { Customer, Appointment } from '@/src/types';
-import { format } from 'date-fns';
+import { format, subDays, subMonths, subYears, parseISO, eachDayOfInterval, eachMonthOfInterval, eachYearOfInterval } from 'date-fns';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [appointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
   const [customers] = useLocalStorage<Customer[]>('crm_customers', []);
+  const [timeRange, setTimeRange] = useState('1y');
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todaysAppts = appointments.filter(a => a.date === todayStr).sort((a, b) => a.time.localeCompare(b.time));
   const pendingAppts = todaysAppts.filter(a => a.status === 'Chờ khám');
   const newLeads = customers.filter(c => c.status === 'Tiềm năng');
+
+  const revenueData = useMemo(() => {
+    const now = new Date();
+    let startDate: Date;
+    let interval: 'day' | 'month' | 'year';
+
+    switch (timeRange) {
+      case '1w':
+        startDate = subDays(now, 7);
+        interval = 'day';
+        break;
+      case '1m':
+        startDate = subMonths(now, 1);
+        interval = 'day';
+        break;
+      case '1y':
+        startDate = subYears(now, 1);
+        interval = 'month';
+        break;
+      case '2y':
+        startDate = subYears(now, 2);
+        interval = 'month';
+        break;
+      case '5y':
+        startDate = subYears(now, 5);
+        interval = 'year';
+        break;
+      case '10y':
+        startDate = subYears(now, 10);
+        interval = 'year';
+        break;
+      case 'all':
+        const oldest = customers.reduce((acc, c) => {
+          const d = c.startDate ? parseISO(c.startDate) : new Date(c.createdAt);
+          return d < acc ? d : acc;
+        }, now);
+        startDate = oldest;
+        interval = 'year';
+        break;
+      default:
+        startDate = subYears(now, 1);
+        interval = 'month';
+    }
+
+    let points: Date[] = [];
+    try {
+      if (interval === 'day') {
+        points = eachDayOfInterval({ start: startDate, end: now });
+      } else if (interval === 'month') {
+        points = eachMonthOfInterval({ start: startDate, end: now });
+      } else {
+        points = eachYearOfInterval({ start: startDate, end: now });
+      }
+    } catch (e) {
+      points = [now];
+    }
+
+    return points.map(date => {
+      const label = interval === 'day' ? format(date, 'dd/MM') : 
+                    interval === 'month' ? format(date, 'MM/yy') : 
+                    format(date, 'yyyy');
+      
+      const total = customers.reduce((acc, c) => {
+        if (c.status !== 'Hậu phẫu' || !c.totalCost) return acc;
+        const cDate = c.startDate ? parseISO(c.startDate) : new Date(c.createdAt);
+        
+        let match = false;
+        if (interval === 'day') {
+          match = format(cDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+        } else if (interval === 'month') {
+          match = format(cDate, 'yyyy-MM') === format(date, 'yyyy-MM');
+        } else {
+          match = format(cDate, 'yyyy') === format(date, 'yyyy');
+        }
+
+        if (match) {
+          const cost = parseInt(c.totalCost.replace(/\D/g, '')) || 0;
+          return acc + cost;
+        }
+        return acc;
+      }, 0);
+
+      return { name: label, value: total };
+    });
+  }, [customers, timeRange]);
 
   return (
     <div className="space-y-8">
@@ -83,6 +170,87 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-rose-100 dark:border-zinc-800">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center text-rose-700 dark:text-rose-400">
+              <TrendingUp className="w-5 h-5 mr-2" />
+              Biểu đồ doanh thu
+            </CardTitle>
+            <CardDescription>Doanh thu từ khách hàng đã thực hiện dịch vụ (Hậu phẫu)</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {[
+              { id: '1w', label: '1 tuần' },
+              { id: '1m', label: '1 tháng' },
+              { id: '1y', label: '1 năm' },
+              { id: '2y', label: '2 năm' },
+              { id: '5y', label: '5 năm' },
+              { id: '10y', label: '10 năm' },
+              { id: 'all', label: 'Tất cả' }
+            ].map(range => (
+              <Button 
+                key={range.id}
+                variant={timeRange === range.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTimeRange(range.id)}
+                className={`text-[10px] sm:text-xs px-2 h-7 sm:h-8 ${timeRange === range.id ? 'bg-rose-600 hover:bg-rose-700 text-white border-transparent' : 'text-gray-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-800'}`}
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(0)}M` : value >= 1000 ? `${(value / 1000).toFixed(0)}K` : value}
+                />
+                <Tooltip 
+                  formatter={(value: number) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), 'Doanh thu']}
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    fontSize: '12px'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#e11d48" 
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                  strokeWidth={2}
+                  animationDuration={1500}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>

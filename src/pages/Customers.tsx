@@ -94,6 +94,11 @@ export default function Customers() {
     const customer = customers.find(c => c.id === id);
     if (!customer) return;
 
+    // Only allow moving to 'Hậu phẫu' if current status is 'Đã chốt'
+    if (newStatus === 'Hậu phẫu' && customer.status !== 'Đã chốt') {
+      return;
+    }
+
     const updated = customers.map(c => c.id === id ? { ...c, status: newStatus } : c);
     setCustomers(updated);
 
@@ -253,7 +258,15 @@ export default function Customers() {
                           value={customer.status}
                           onChange={(e) => handleStatusChange(customer.id, e.target.value as any)}
                         >
-                          {statuses.map(s => <option key={s} value={s}>Chuyển: {s}</option>)}
+                          {statuses.map(s => (
+                            <option 
+                              key={s} 
+                              value={s} 
+                              disabled={s === 'Hậu phẫu' && customer.status !== 'Đã chốt'}
+                            >
+                              Chuyển: {s}
+                            </option>
+                          ))}
                         </select>
                       )}
                       {status === 'Hậu phẫu' && (
@@ -435,7 +448,15 @@ export default function Customers() {
                   value={editingCustomer.status}
                   onChange={e => setEditingCustomer({...editingCustomer, status: e.target.value as any})}
                 >
-                  {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                  {statuses.map(s => (
+                    <option 
+                      key={s} 
+                      value={s} 
+                      disabled={s === 'Hậu phẫu' && editingCustomer.status !== 'Đã chốt'}
+                    >
+                      {s}
+                    </option>
+                  ))}
                 </select>
               </div>
               
