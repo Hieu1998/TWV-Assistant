@@ -13,6 +13,8 @@ import Customers from './pages/Customers';
 import Appointments from './pages/Appointments';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Services from './pages/Services';
+import Sources from './pages/Sources';
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="customers" element={<Customers />} />
           <Route path="appointments" element={<Appointments />} />
+          <Route path="services" element={<Services />} />
+          <Route path="sources" element={<Sources />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="post-generator" element={<PostGenerator />} />

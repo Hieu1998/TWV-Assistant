@@ -54,11 +54,12 @@ export default function Reports() {
   }, [monthlyReports]);
 
   const exportToCSV = (month: string, data: Customer[], total: number) => {
-    const headers = ['Tên khách hàng', 'Số điện thoại', 'Dịch vụ', 'Chi phí'];
+    const headers = ['Tên khách hàng', 'Số điện thoại', 'Dịch vụ', 'Nguồn', 'Chi phí'];
     const rows = data.map(c => [
       c.name,
       c.phone,
-      c.service || '',
+      (c.services || []).join(', '),
+      c.source || '',
       c.totalCost || '0'
     ]);
     
@@ -81,11 +82,12 @@ export default function Reports() {
   };
 
   const copyToClipboard = (month: string, data: Customer[], total: number) => {
-    const headers = ['Tên khách hàng', 'Số điện thoại', 'Dịch vụ', 'Chi phí'];
+    const headers = ['Tên khách hàng', 'Số điện thoại', 'Dịch vụ', 'Nguồn', 'Chi phí'];
     const rows = data.map(c => [
       c.name,
       c.phone,
-      c.service || '',
+      (c.services || []).join(', '),
+      c.source || '',
       c.totalCost || '0'
     ]);
     
@@ -235,6 +237,7 @@ export default function Reports() {
                         <TableRow className="hover:bg-transparent border-rose-100 dark:border-[#4a2b2d]">
                           <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Khách hàng</TableHead>
                           <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Dịch vụ</TableHead>
+                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Nguồn</TableHead>
                           <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-right text-xs lg:text-sm">Chi phí</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -246,9 +249,20 @@ export default function Reports() {
                               <div className="text-[10px] lg:text-xs text-gray-500 dark:text-rose-300/70">{c.phone}</div>
                             </TableCell>
                             <TableCell className="py-2 lg:py-4">
-                              <span className="px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs">
-                                {c.service || 'N/A'}
-                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                {c.services && c.services.length > 0 ? (
+                                  c.services.map((s, i) => (
+                                    <span key={i} className="px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs">
+                                      {s}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-[10px] lg:text-xs text-gray-400">N/A</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2 lg:py-4">
+                              <span className="text-xs text-gray-600 dark:text-rose-200">{c.source || 'N/A'}</span>
                             </TableCell>
                             <TableCell className="text-right font-semibold text-rose-600 dark:text-rose-400 py-2 lg:py-4 text-xs lg:text-sm">
                               {c.totalCost || '0 đ'}

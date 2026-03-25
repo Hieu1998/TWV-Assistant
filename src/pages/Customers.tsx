@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from '@/src/lib/useLocalStorage';
-import { Customer, Appointment } from '@/src/types';
+import { Customer, Appointment, Service, CustomerSource } from '@/src/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -11,9 +11,16 @@ import { addDays, format } from 'date-fns';
 export default function Customers() {
   const [customers, setCustomers] = useLocalStorage<Customer[]>('crm_customers', []);
   const [appointments, setAppointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
+  const [services] = useLocalStorage<Service[]>('crm_services', []);
+  const [sources] = useLocalStorage<CustomerSource[]>('crm_sources', [
+    { id: '1', name: 'Facebook' },
+    { id: '2', name: 'TikTok' },
+    { id: '3', name: 'Người quen giới thiệu' },
+    { id: '4', name: 'Zalo' }
+  ]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', service: '', status: 'Tiềm năng' as const, notes: '', source: '' });
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
   
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [confirmScheduleModal, setConfirmScheduleModal] = useState<{isOpen: boolean, customer: Customer | null}>({isOpen: false, customer: null});
@@ -48,7 +55,7 @@ export default function Customers() {
     };
     setCustomers([customer, ...customers]);
     setShowAddModal(false);
-    setNewCustomer({ name: '', phone: '', service: '', status: 'Tiềm năng', notes: '', source: '' });
+    setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '' });
   };
 
   const handleUpdateCustomer = () => {
@@ -190,8 +197,16 @@ export default function Customers() {
                         Nguồn: {customer.source}
                       </div>
                     )}
-                    <div className="text-sm text-rose-600 dark:text-rose-400 mt-2 font-medium bg-rose-50 dark:bg-rose-500/20 inline-block px-2 py-0.5 rounded">
-                      {customer.service || 'Chưa rõ dịch vụ'}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {customer.services && customer.services.length > 0 ? (
+                        customer.services.map((s, i) => (
+                          <span key={i} className="text-[10px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/20 px-2 py-0.5 rounded">
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-gray-400 italic">Chưa chọn dịch vụ</span>
+                      )}
                     </div>
                     
                     {(customer.startDate || customer.totalCost) && (
@@ -241,20 +256,63 @@ export default function Customers() {
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto">
               <div className="space-y-2">
-                <Label>Tên khách hàng *</Label>
-                <Input value={newCustomer.name} onChange={e => setNewCustomer({...newCustomer, name: e.target.value})} />
+                <Label>Tên khách hàng <span className="text-rose-600">*</span></Label>
+                <Input value={newCustomer.name} onChange={e => setNewCustomer({...newCustomer, name: e.target.value})} placeholder="Nhập tên khách hàng" />
               </div>
               <div className="space-y-2">
-                <Label>Số điện thoại *</Label>
-                <Input value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} />
+                <Label>Số điện thoại <span className="text-rose-600">*</span></Label>
+                <Input value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} placeholder="Nhập số điện thoại" />
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ quan tâm</Label>
-                <Input value={newCustomer.service} placeholder="VD: Nâng mũi, Cắt mí..." onChange={e => setNewCustomer({...newCustomer, service: e.target.value})} />
+                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {services.map(s => {
+                    const isSelected = newCustomer.services.includes(s.name);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          const next = isSelected 
+                            ? newCustomer.services.filter(name => name !== s.name)
+                            : [...newCustomer.services, s.name];
+                          setNewCustomer({...newCustomer, services: next});
+                        }}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          isSelected 
+                            ? 'bg-rose-600 text-white border-rose-600' 
+                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  {services.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục dịch vụ</p>}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Nguồn khách hàng</Label>
-                <Input value={newCustomer.source} placeholder="VD: Facebook, Người quen..." onChange={e => setNewCustomer({...newCustomer, source: e.target.value})} />
+                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {sources.map(s => {
+                    const isSelected = newCustomer.source === s.name;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setNewCustomer({...newCustomer, source: isSelected ? '' : s.name})}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          isSelected 
+                            ? 'bg-rose-600 text-white border-rose-600' 
+                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  {sources.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục nguồn</p>}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Trạng thái</Label>
@@ -269,7 +327,13 @@ export default function Customers() {
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
               <Button variant="outline" onClick={() => setShowAddModal(false)}>Hủy</Button>
-              <Button onClick={handleAddCustomer} className="bg-rose-600 hover:bg-rose-700 text-white">Lưu khách hàng</Button>
+              <Button 
+                onClick={handleAddCustomer} 
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+                disabled={!newCustomer.name.trim() || !newCustomer.phone.trim()}
+              >
+                Lưu khách hàng
+              </Button>
             </div>
           </Card>
         </div>
@@ -292,11 +356,55 @@ export default function Customers() {
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ</Label>
-                <Input value={editingCustomer.service} onChange={e => setEditingCustomer({...editingCustomer, service: e.target.value})} />
+                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {services.map(s => {
+                    const isSelected = editingCustomer.services?.includes(s.name);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          const currentServices = editingCustomer.services || [];
+                          const next = isSelected 
+                            ? currentServices.filter(name => name !== s.name)
+                            : [...currentServices, s.name];
+                          setEditingCustomer({...editingCustomer, services: next});
+                        }}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          isSelected 
+                            ? 'bg-rose-600 text-white border-rose-600' 
+                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  {services.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục dịch vụ</p>}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Nguồn khách hàng</Label>
-                <Input value={editingCustomer.source || ''} placeholder="VD: Facebook, Người quen..." onChange={e => setEditingCustomer({...editingCustomer, source: e.target.value})} />
+                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {sources.map(s => {
+                    const isSelected = editingCustomer.source === s.name;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setEditingCustomer({...editingCustomer, source: isSelected ? '' : s.name})}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          isSelected 
+                            ? 'bg-rose-600 text-white border-rose-600' 
+                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  {sources.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục nguồn</p>}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Trạng thái</Label>
@@ -363,7 +471,13 @@ export default function Customers() {
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
               <Button variant="outline" onClick={() => setEditingCustomer(null)}>Hủy</Button>
-              <Button onClick={handleUpdateCustomer} className="bg-rose-600 hover:bg-rose-700 text-white">Lưu thay đổi</Button>
+              <Button 
+                onClick={handleUpdateCustomer} 
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+                disabled={!editingCustomer.name.trim() || !editingCustomer.phone.trim()}
+              >
+                Lưu thay đổi
+              </Button>
             </div>
           </Card>
         </div>

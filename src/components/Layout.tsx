@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
-import { LayoutDashboard, PenTool, MessageCircleHeart, CalendarDays, Sparkles, Users, CalendarClock, Menu, X, Sun, Moon, Key, BarChart3, Settings, AlertCircle, Download } from 'lucide-react';
+import { LayoutDashboard, PenTool, MessageCircleHeart, CalendarDays, Sparkles, Users, CalendarClock, Menu, X, Sun, Moon, Key, BarChart3, Settings, AlertCircle, Download, Scissors, Share2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import ApiKeyModal from './ApiKeyModal';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Tổng quan' },
   { to: '/customers', icon: Users, label: 'Quản lý Khách hàng' },
+  { to: '/services', icon: Scissors, label: 'Danh mục Dịch vụ' },
+  { to: '/sources', icon: Share2, label: 'Nguồn Khách hàng' },
   { to: '/appointments', icon: CalendarClock, label: 'Lịch hẹn & Tái khám' },
   { to: '/reports', icon: BarChart3, label: 'Báo cáo Doanh thu' },
   { to: '/settings', icon: Settings, label: 'Cài đặt & Sao lưu' },

@@ -4,7 +4,7 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
-  service: string;
+  services: string[]; // Array of service names
   status: CustomerStatus;
   notes: string;
   createdAt: string;
@@ -26,4 +26,15 @@ export interface Appointment {
   type: AppointmentType;
   status: 'Chờ khám' | 'Đã xong' | 'Hủy';
   notes: string;
+  serviceName?: string; // Specific service for this appointment
+}
+
+export interface Service {
+  id: string;
+  name: string;
+}
+
+export interface CustomerSource {
+  id: string;
+  name: string;
 }

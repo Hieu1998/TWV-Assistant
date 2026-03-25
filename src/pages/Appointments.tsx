@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useLocalStorage } from '@/src/lib/useLocalStorage';
-import { Appointment, Customer } from '@/src/types';
+import { Appointment, Customer, Service } from '@/src/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -11,12 +11,13 @@ import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eac
 export default function Appointments() {
   const [appointments, setAppointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
   const [customers] = useLocalStorage<Customer[]>('crm_customers', []);
+  const [services] = useLocalStorage<Service[]>('crm_services', []);
   
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newAppt, setNewAppt] = useState({ customerId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '09:00', type: 'Tái khám' as const, notes: '' });
+  const [newAppt, setNewAppt] = useState({ customerId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '09:00', type: 'Tái khám' as const, notes: '', serviceName: '' });
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +52,7 @@ export default function Appointments() {
     };
     setAppointments([...appointments, appt]);
     setShowAddModal(false);
-    setNewAppt({ customerId: '', date: selectedDate, time: '09:00', type: 'Tái khám', notes: '' });
+    setNewAppt({ customerId: '', date: selectedDate, time: '09:00', type: 'Tái khám', notes: '', serviceName: '' });
   };
 
   const handleStatusChange = (id: string, status: Appointment['status']) => {
@@ -157,8 +158,11 @@ export default function Appointments() {
                               <User className="w-4 h-4 mr-1" /> <span className="font-medium">{appt.customerName}</span>
                               {customer && <span className="ml-2 text-sm text-gray-400 dark:text-rose-300/70">({customer.phone})</span>}
                             </div>
-                            {customer && customer.service && (
-                              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1">Dịch vụ: {customer.service}</div>
+                            {customer && customer.services && customer.services.length > 0 && (
+                              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 italic">Dịch vụ KH: {customer.services.join(', ')}</div>
+                            )}
+                            {appt.serviceName && (
+                              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-bold">Dịch vụ hẹn: {appt.serviceName}</div>
                             )}
                             {appt.notes && <p className="text-sm text-gray-500 dark:text-rose-300/70 mt-1">{appt.notes}</p>}
                           </div>
@@ -239,7 +243,8 @@ export default function Appointments() {
                           {customer && (
                             <div className="text-[10px] mt-0.5 space-y-0.5 opacity-80">
                               <div className="flex items-center"><Phone className="w-2 h-2 mr-1"/>{customer.phone}</div>
-                              {customer.service && <div className="truncate">DV: {customer.service}</div>}
+                              {customer.services && customer.services.length > 0 && <div className="truncate">DV KH: {customer.services.join(', ')}</div>}
+                              {appt.serviceName && <div className="truncate font-bold">DV Hẹn: {appt.serviceName}</div>}
                               {customer.startDate && <div>BĐ: {format(new Date(customer.startDate), 'dd/MM')}</div>}
                               {customer.appointments && customer.appointments[0] && <div>Hẹn 1: {format(new Date(customer.appointments[0]), 'dd/MM')}</div>}
                             </div>
@@ -263,7 +268,7 @@ export default function Appointments() {
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto">
               <div className="space-y-2">
-                <Label>Khách hàng *</Label>
+                <Label>Khách hàng <span className="text-rose-600">*</span></Label>
                 <select 
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
                   value={newAppt.customerId}
@@ -277,11 +282,11 @@ export default function Appointments() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Ngày *</Label>
+                  <Label>Ngày <span className="text-rose-600">*</span></Label>
                   <Input type="date" value={newAppt.date} onChange={e => setNewAppt({...newAppt, date: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giờ *</Label>
+                  <Label>Giờ <span className="text-rose-600">*</span></Label>
                   <Input type="time" value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} />
                 </div>
               </div>
@@ -298,6 +303,21 @@ export default function Appointments() {
                   <option value="Cắt chỉ">Cắt chỉ</option>
                 </select>
               </div>
+              {services.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Dịch vụ cụ thể cho buổi hẹn</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
+                    value={newAppt.serviceName}
+                    onChange={e => setNewAppt({...newAppt, serviceName: e.target.value})}
+                  >
+                    <option value="">-- Chọn dịch vụ --</option>
+                    {services.map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Input value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} placeholder="VD: Nhắc khách nhịn ăn sáng..." />
@@ -305,7 +325,13 @@ export default function Appointments() {
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
               <Button variant="outline" onClick={() => setShowAddModal(false)}>Hủy</Button>
-              <Button onClick={handleAddAppt} className="bg-rose-600 hover:bg-rose-700 text-white" disabled={!newAppt.customerId}>Lưu lịch hẹn</Button>
+              <Button 
+                onClick={handleAddAppt} 
+                className="bg-rose-600 hover:bg-rose-700 text-white" 
+                disabled={!newAppt.customerId || !newAppt.date || !newAppt.time}
+              >
+                Lưu lịch hẹn
+              </Button>
             </div>
           </Card>
         </div>
