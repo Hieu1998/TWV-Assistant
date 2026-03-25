@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Customer, Appointment, Service, CustomerSource } from '@/src/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
@@ -10,16 +10,16 @@ import { addDays, format } from 'date-fns';
 import { formatCurrency } from '@/src/lib/utils';
 
 export default function Customers() {
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('crm_customers', []);
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
-  const [services] = useLocalStorage<Service[]>('crm_services', []);
-  const [sources] = useLocalStorage<CustomerSource[]>('crm_sources', [
-    { id: '1', name: 'Facebook' },
-    { id: '2', name: 'TikTok' },
-    { id: '3', name: 'KH giới thiệu' },
-    { id: '4', name: 'Zalo' },
-    { id: '5', name: 'CTV' }
-  ]);
+  const { 
+    customers, 
+    appointments, 
+    services, 
+    sources, 
+    upsertCustomer, 
+    deleteCustomer, 
+    upsertAppointment 
+  } = useSupabase();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
@@ -49,27 +49,26 @@ export default function Customers() {
 
   const monthlyRevenue = getMonthlyRevenue();
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) return;
     const customer: Customer = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       ...newCustomer,
       createdAt: new Date().toISOString(),
       appointments: []
     };
-    setCustomers([customer, ...customers]);
+    await upsertCustomer(customer);
     setShowAddModal(false);
     setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '' });
   };
 
-  const handleUpdateCustomer = () => {
+  const handleUpdateCustomer = async () => {
     if (!editingCustomer) return;
     
-    // Check if status changed to 'Hậu phẫu'
     const oldCustomer = customers.find(c => c.id === editingCustomer.id);
     const statusChangedToHauPhau = oldCustomer?.status !== 'Hậu phẫu' && editingCustomer.status === 'Hậu phẫu';
 
-    setCustomers(customers.map(c => c.id === editingCustomer.id ? editingCustomer : c));
+    await upsertCustomer(editingCustomer);
     setEditingCustomer(null);
 
     if (statusChangedToHauPhau) {
@@ -82,27 +81,24 @@ export default function Customers() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDeleteCustomer = () => {
+  const confirmDeleteCustomer = async () => {
     if (customerToDelete) {
-      setCustomers(customers.filter(c => c.id !== customerToDelete.id));
-      // Also clean up appointments for this customer
-      setAppointments(appointments.filter(a => a.customerId !== customerToDelete.id));
+      await deleteCustomer(customerToDelete.id);
       setCustomerToDelete(null);
       setIsDeleteModalOpen(false);
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: Customer['status']) => {
+  const handleStatusChange = async (id: string, newStatus: Customer['status']) => {
     const customer = customers.find(c => c.id === id);
     if (!customer) return;
 
-    // Only allow moving to 'Hậu phẫu' if current status is 'Đã chốt'
     if (newStatus === 'Hậu phẫu' && customer.status !== 'Đã chốt') {
       return;
     }
 
-    const updated = customers.map(c => c.id === id ? { ...c, status: newStatus } : c);
-    setCustomers(updated);
+    const updatedCustomer = { ...customer, status: newStatus };
+    await upsertCustomer(updatedCustomer);
 
     if (newStatus === 'Hậu phẫu' && customer.status !== 'Hậu phẫu') {
       const today = new Date();
@@ -115,15 +111,20 @@ export default function Customers() {
     }
   };
 
-  const confirmAutoSchedule = () => {
+  const confirmAutoSchedule = async () => {
     if (!confirmScheduleModal.customer) return;
     const customer = confirmScheduleModal.customer;
-    const newAppts: Appointment[] = [
-      { id: Date.now() + '1', customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' },
-      { id: Date.now() + '7', customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' },
-      { id: Date.now() + '30', customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' },
-    ];
-    setAppointments([...appointments, ...newAppts]);
+    
+    const appt1: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' };
+    const appt7: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' };
+    const appt30: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' };
+    
+    await Promise.all([
+      upsertAppointment(appt1),
+      upsertAppointment(appt7),
+      upsertAppointment(appt30)
+    ]);
+    
     setConfirmScheduleModal({ isOpen: false, customer: null });
   };
 

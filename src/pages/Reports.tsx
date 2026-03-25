@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Customer } from '@/src/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
@@ -11,7 +11,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
 export default function Reports() {
-  const [customers] = useLocalStorage<Customer[]>('crm_customers', []);
+  const { customers } = useSupabase();
   const [copiedMonth, setCopiedMonth] = React.useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = React.useState<string | null>(null);
 

@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
-import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { Input } from '@/src/components/ui/input';
+import { Label } from '@/src/components/ui/label';
+import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, RefreshCw, Database, LogOut } from 'lucide-react';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Customer, Appointment } from '@/src/types';
+import { getSupabaseConfig, setSupabaseConfig, refreshSupabaseClient } from '@/src/lib/supabase';
 
 export default function Settings() {
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('crm_customers', []);
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
+  const { customers, appointments, upsertCustomer, upsertAppointment, deleteCustomer, deleteAppointment, setConfigured } = useSupabase();
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | 'none', message: string }>({ type: 'none', message: '' });
+  
+  const config = getSupabaseConfig();
+  const [url, setUrl] = useState(config.url || '');
+  const [key, setKey] = useState(config.key || '');
+
+  const handleUpdateConfig = () => {
+    if (!url || !key) return;
+    setSupabaseConfig(url, key);
+    refreshSupabaseClient();
+    window.location.reload();
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất khỏi Supabase? Cấu hình URL và Key sẽ bị xóa khỏi trình duyệt.')) {
+      localStorage.removeItem('supabase_url');
+      localStorage.removeItem('supabase_key');
+      setConfigured(false);
+    }
+  };
 
   const handleExport = () => {
     const data = {
@@ -21,34 +42,35 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `crm_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `crm_supabase_backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    // Update last backup date
-    localStorage.setItem('crm_last_backup_date', new Date().toISOString());
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const data = JSON.parse(content);
 
         if (data.customers && Array.isArray(data.customers)) {
-          setCustomers(data.customers);
+          for (const c of data.customers) {
+            await upsertCustomer(c);
+          }
         }
         if (data.appointments && Array.isArray(data.appointments)) {
-          setAppointments(data.appointments);
+          for (const a of data.appointments) {
+            await upsertAppointment(a);
+          }
         }
 
-        setImportStatus({ type: 'success', message: 'Dữ liệu đã được nhập thành công!' });
+        setImportStatus({ type: 'success', message: 'Dữ liệu đã được nhập thành công vào Supabase!' });
         setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
       } catch (error) {
         setImportStatus({ type: 'error', message: 'Lỗi khi nhập dữ liệu. Vui lòng kiểm tra lại file.' });
@@ -58,11 +80,16 @@ export default function Settings() {
     reader.readAsText(file);
   };
 
-  const handleClearData = () => {
-    if (window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU? Hành động này không thể hoàn tác.')) {
-      setCustomers([]);
-      setAppointments([]);
-      setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá.' });
+  const handleClearData = async () => {
+    if (window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU TRÊN SUPABASE? Hành động này không thể hoàn tác.')) {
+      for (const c of customers) {
+        await deleteCustomer(c.id);
+      }
+      // Appointments are deleted via cascade in DB usually, but let's be safe if not
+      for (const a of appointments) {
+        await deleteAppointment(a.id);
+      }
+      setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
       setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
     }
   };
@@ -84,6 +111,36 @@ export default function Settings() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-rose-100 dark:border-[#4a2b2d] bg-white dark:bg-[#181a1b] md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
+              <Database className="w-5 h-5" />
+              Cấu hình Supabase
+            </CardTitle>
+            <CardDescription>Quản lý kết nối tới cơ sở dữ liệu Supabase của bạn.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="url">Supabase URL</Label>
+                <Input id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="key">Supabase Anon Key</Label>
+                <Input id="key" type="password" value={key} onChange={(e) => setKey(e.target.value)} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleUpdateConfig} className="bg-rose-600 hover:bg-rose-700 text-white">
+                Cập nhật cấu hình
+              </Button>
+              <Button onClick={handleLogout} variant="outline" className="text-red-600 border-red-200">
+                <LogOut className="w-4 h-4 mr-2" /> Đăng xuất Supabase
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-rose-100 dark:border-[#4a2b2d] bg-white dark:bg-[#181a1b]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-rose-700 dark:text-rose-400">

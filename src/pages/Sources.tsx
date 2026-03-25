@@ -4,17 +4,11 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Plus, Search, Edit2, Trash2, Share2 } from 'lucide-react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { CustomerSource } from '@/src/types';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function Sources() {
-  const [sources, setSources] = useLocalStorage<CustomerSource[]>('crm_sources', [
-    { id: '1', name: 'Facebook' },
-    { id: '2', name: 'TikTok' },
-    { id: '3', name: 'Người quen giới thiệu' },
-    { id: '4', name: 'Zalo' }
-  ]);
+  const { sources, upsertSource, deleteSource } = useSupabase();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sourceToDelete, setSourceToDelete] = useState<string | null>(null);
@@ -33,20 +27,16 @@ export default function Sources() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sourceName.trim()) return;
 
     const sourceData: CustomerSource = {
-      id: editingSource ? editingSource.id : uuidv4(),
+      id: editingSource ? editingSource.id : crypto.randomUUID(),
       name: sourceName.trim(),
     };
 
-    if (editingSource) {
-      setSources(sources.map(s => s.id === editingSource.id ? sourceData : s));
-    } else {
-      setSources([...sources, sourceData]);
-    }
+    await upsertSource(sourceData);
     setIsModalOpen(false);
   };
 
@@ -55,9 +45,9 @@ export default function Sources() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (sourceToDelete) {
-      setSources(sources.filter(s => s.id !== sourceToDelete));
+      await deleteSource(sourceToDelete);
       setSourceToDelete(null);
       setIsDeleteModalOpen(false);
     }

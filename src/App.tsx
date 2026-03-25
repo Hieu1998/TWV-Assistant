@@ -15,8 +15,16 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Services from './pages/Services';
 import Sources from './pages/Sources';
+import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
+import SupabaseSetup from './components/SupabaseSetup';
 
-export default function App() {
+function AppContent() {
+  const { isConfigured, setConfigured } = useSupabase();
+
+  if (!isConfigured) {
+    return <SupabaseSetup onConfigured={() => setConfigured(true)} />;
+  }
+
   return (
     <HashRouter>
       <Routes>
@@ -34,5 +42,13 @@ export default function App() {
         </Route>
       </Routes>
     </HashRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <SupabaseProvider>
+      <AppContent />
+    </SupabaseProvider>
   );
 }

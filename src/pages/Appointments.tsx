@@ -1,17 +1,15 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Appointment, Customer, Service } from '@/src/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { Calendar as CalendarIcon, Clock, User, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, Phone, ArrowUp } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
 export default function Appointments() {
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>('crm_appointments', []);
-  const [customers] = useLocalStorage<Customer[]>('crm_customers', []);
-  const [services] = useLocalStorage<Service[]>('crm_services', []);
+  const { appointments, customers, services, upsertAppointment } = useSupabase();
   
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
@@ -37,26 +35,29 @@ export default function Appointments() {
     }
   };
 
-  const handleAddAppt = () => {
+  const handleAddAppt = async () => {
     if (!newAppt.customerId || !newAppt.date) return;
     
     const customer = customers.find(c => c.id === newAppt.customerId);
     if (!customer) return;
 
     const appt: Appointment = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       customerId: customer.id,
       customerName: customer.name,
       status: 'Chờ khám',
       ...newAppt
     };
-    setAppointments([...appointments, appt]);
+    await upsertAppointment(appt);
     setShowAddModal(false);
     setNewAppt({ customerId: '', date: selectedDate, time: '09:00', type: 'Tái khám', notes: '', serviceName: '' });
   };
 
-  const handleStatusChange = (id: string, status: Appointment['status']) => {
-    setAppointments(appointments.map(a => a.id === id ? { ...a, status } : a));
+  const handleStatusChange = async (id: string, status: Appointment['status']) => {
+    const appt = appointments.find(a => a.id === id);
+    if (appt) {
+      await upsertAppointment({ ...appt, status });
+    }
   };
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));

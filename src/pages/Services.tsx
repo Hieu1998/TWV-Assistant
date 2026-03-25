@@ -4,12 +4,11 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Plus, Search, Edit2, Trash2, Scissors } from 'lucide-react';
-import { useLocalStorage } from '@/src/lib/useLocalStorage';
+import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Service } from '@/src/types';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function Services() {
-  const [services, setServices] = useLocalStorage<Service[]>('crm_services', []);
+  const { services, upsertService, deleteService } = useSupabase();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
@@ -28,20 +27,16 @@ export default function Services() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!serviceName.trim()) return;
 
     const serviceData: Service = {
-      id: editingService ? editingService.id : uuidv4(),
+      id: editingService ? editingService.id : crypto.randomUUID(),
       name: serviceName.trim(),
     };
 
-    if (editingService) {
-      setServices(services.map(s => s.id === editingService.id ? serviceData : s));
-    } else {
-      setServices([...services, serviceData]);
-    }
+    await upsertService(serviceData);
     setIsModalOpen(false);
   };
 
@@ -50,9 +45,9 @@ export default function Services() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (serviceToDelete) {
-      setServices(services.filter(s => s.id !== serviceToDelete));
+      await deleteService(serviceToDelete);
       setServiceToDelete(null);
       setIsDeleteModalOpen(false);
     }
