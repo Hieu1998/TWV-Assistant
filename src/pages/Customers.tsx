@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from '@/src/lib/useLocalStorage';
 import { Customer, Appointment, Service, CustomerSource } from '@/src/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign } from 'lucide-react';
+import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign, Trash2 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
 export default function Customers() {
@@ -23,6 +23,8 @@ export default function Customers() {
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
   
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [confirmScheduleModal, setConfirmScheduleModal] = useState<{isOpen: boolean, customer: Customer | null}>({isOpen: false, customer: null});
   const [autoScheduleDates, setAutoScheduleDates] = useState({ day1: format(addDays(new Date(), 1), 'yyyy-MM-dd'), day7: format(addDays(new Date(), 7), 'yyyy-MM-dd'), month1: format(addDays(new Date(), 30), 'yyyy-MM-dd') });
 
@@ -70,6 +72,21 @@ export default function Customers() {
 
     if (statusChangedToHauPhau) {
       setConfirmScheduleModal({ isOpen: true, customer: editingCustomer });
+    }
+  };
+
+  const handleDeleteCustomer = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteCustomer = () => {
+    if (customerToDelete) {
+      setCustomers(customers.filter(c => c.id !== customerToDelete.id));
+      // Also clean up appointments for this customer
+      setAppointments(appointments.filter(a => a.customerId !== customerToDelete.id));
+      setCustomerToDelete(null);
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -185,9 +202,14 @@ export default function Customers() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 dark:text-rose-300/50 hover:text-rose-600 dark:hover:text-rose-400" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}>
-                        <Edit className="h-3 w-3" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 dark:text-rose-300/50 hover:text-rose-600 dark:hover:text-rose-400" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}>
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 dark:text-rose-300/50 hover:text-red-600 dark:hover:text-red-400" onClick={(e) => { e.stopPropagation(); handleDeleteCustomer(customer); }}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="text-sm text-gray-500 dark:text-rose-300/70 flex items-center mt-1">
                       <Phone className="w-3 h-3 mr-1" /> {customer.phone}
@@ -472,6 +494,17 @@ export default function Customers() {
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
               <Button variant="outline" onClick={() => setEditingCustomer(null)}>Hủy</Button>
               <Button 
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"
+                onClick={() => {
+                  const customer = editingCustomer;
+                  setEditingCustomer(null);
+                  handleDeleteCustomer(customer);
+                }}
+              >
+                Xóa khách hàng
+              </Button>
+              <Button 
                 onClick={handleUpdateCustomer} 
                 className="bg-rose-600 hover:bg-rose-700 text-white"
                 disabled={!editingCustomer.name.trim() || !editingCustomer.phone.trim()}
@@ -515,6 +548,24 @@ export default function Customers() {
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
               <Button variant="outline" onClick={() => setConfirmScheduleModal({ isOpen: false, customer: null })}>Bỏ qua</Button>
               <Button onClick={confirmAutoSchedule} className="bg-rose-600 hover:bg-rose-700 text-white">Tạo lịch ngay</Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isDeleteModalOpen && customerToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <Card className="w-full max-w-sm shadow-2xl">
+            <CardHeader>
+              <CardTitle>Xác nhận xóa khách hàng</CardTitle>
+              <CardDescription>
+                Bạn có chắc chắn muốn xóa khách hàng <strong className="text-rose-600">{customerToDelete.name}</strong>? 
+                Mọi lịch hẹn liên quan cũng sẽ bị xóa. Hành động này không thể hoàn tác.
+              </CardDescription>
+            </CardHeader>
+            <div className="p-6 pt-0 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Hủy</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCustomer}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>
