@@ -27,10 +27,7 @@ export default function Layout() {
   const [apiKey, setApiKey] = useState(() => {
     const saved = localStorage.getItem('gemini_api_key');
     if (saved) return saved;
-    // Set default key provided by user
-    const defaultKey = 'AIzaSyBRv3Go__aIg-n4DSFoID5njMnwgcYZ1z8';
-    localStorage.setItem('gemini_api_key', defaultKey);
-    return defaultKey;
+    return '';
   });
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showBackupReminder, setShowBackupReminder] = useState(false);
