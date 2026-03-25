@@ -7,6 +7,7 @@ import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign, Trash2 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
+import { formatCurrency } from '@/src/lib/utils';
 
 export default function Customers() {
   const [customers, setCustomers] = useLocalStorage<Customer[]>('crm_customers', []);
@@ -15,8 +16,9 @@ export default function Customers() {
   const [sources] = useLocalStorage<CustomerSource[]>('crm_sources', [
     { id: '1', name: 'Facebook' },
     { id: '2', name: 'TikTok' },
-    { id: '3', name: 'Người quen giới thiệu' },
-    { id: '4', name: 'Zalo' }
+    { id: '3', name: 'KH giới thiệu' },
+    { id: '4', name: 'Zalo' },
+    { id: '5', name: 'CTV' }
   ]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -139,7 +141,7 @@ export default function Customers() {
       setEditingCustomer({...editingCustomer, totalCost: ''});
       return;
     }
-    const formatted = new Intl.NumberFormat('vi-VN').format(parseInt(newDigits, 10)) + ' VNĐ';
+    const formatted = formatCurrency(newDigits);
     setEditingCustomer({...editingCustomer, totalCost: formatted});
   };
 
@@ -172,7 +174,7 @@ export default function Customers() {
                 <div key={month} className="p-3 rounded-lg bg-white dark:bg-[#281718] border border-rose-100 dark:border-[#4a2b2d]">
                   <div className="text-xs text-gray-500 dark:text-rose-300/70">{month}</div>
                   <div className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                    {new Intl.NumberFormat('vi-VN').format(amount)} đ
+                    {formatCurrency(amount)}
                   </div>
                 </div>
               ))}

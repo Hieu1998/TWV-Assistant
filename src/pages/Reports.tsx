@@ -6,7 +6,9 @@ import { Button } from '@/src/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
 import { FileDown, DollarSign, Users, Calendar, Copy, Check, BarChart3 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { cn } from '@/src/lib/utils';
+import { cn, formatCurrency } from '@/src/lib/utils';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 export default function Reports() {
   const [customers] = useLocalStorage<Customer[]>('crm_customers', []);
@@ -53,32 +55,150 @@ export default function Reports() {
     };
   }, [monthlyReports]);
 
-  const exportToCSV = (month: string, data: Customer[], total: number) => {
-    const headers = ['Tên khách hàng', 'Số điện thoại', 'Dịch vụ', 'Nguồn', 'Chi phí'];
-    const rows = data.map(c => [
-      c.name,
-      c.phone,
-      (c.services || []).join(', '),
-      c.source || '',
-      c.totalCost || '0'
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.map(cell => `"${cell}"`).join(',')),
-      '',
-      `"Tổng cộng",,,,"${new Intl.NumberFormat('vi-VN').format(total)} đ"`
-    ].join('\n');
+  const exportToExcel = async (month: string, data: Customer[], total: number) => {
+    const [m, y] = month.split('/');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`Tháng ${m}`);
 
-    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Bao_cao_hau_phau_${month.replace('/', '_')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Set column widths
+    worksheet.columns = [
+      { width: 10 }, // NGÀY
+      { width: 25 }, // KHÁCH HÀNG
+      { width: 15 }, // SĐT
+      { width: 30 }, // DỊCH VỤ
+      { width: 15 }, // CHỐT
+      { width: 15 }, // Hệ thống
+      { width: 15 }, // KH giới thiệu
+      { width: 15 }, // CTV
+      { width: 10 }, // Hẹn
+      { width: 10 }, // Chốt
+      { width: 10 }, // Chăm sóc
+    ];
+
+    // 1. Title Row
+    const titleRow = worksheet.addRow([`DOANH THU THẨM MỸ THÁNG ${m}`]);
+    worksheet.mergeCells(1, 1, 1, 11);
+    titleRow.getCell(1).font = { bold: true, size: 16 };
+    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    titleRow.height = 30;
+
+    // 2. Header Rows
+    const headerRow1 = worksheet.addRow([
+      'NGÀY', 'KHÁCH HÀNG', 'SĐT', 'DỊCH VỤ', 'CHỐT', 'DOANH THU - NGUỒN', '', '', 'PHÂN BỔ', '', ''
+    ]);
+    const headerRow2 = worksheet.addRow([
+      '', '', '', '', '', 'Hệ thống', 'KH giới thiệu', 'CTV', 'Hẹn', 'Chốt', 'Chăm sóc'
+    ]);
+
+    // Merge headers
+    worksheet.mergeCells(2, 1, 3, 1); // NGÀY
+    worksheet.mergeCells(2, 2, 3, 2); // KHÁCH HÀNG
+    worksheet.mergeCells(2, 3, 3, 3); // SĐT
+    worksheet.mergeCells(2, 4, 3, 4); // DỊCH VỤ
+    worksheet.mergeCells(2, 5, 3, 5); // CHỐT
+    worksheet.mergeCells(2, 6, 2, 8); // DOANH THU - NGUỒN
+    worksheet.mergeCells(2, 9, 2, 11); // PHÂN BỔ
+
+    // Style headers
+    [headerRow1, headerRow2].forEach(row => {
+      row.eachCell(cell => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFA500' } // Orange
+        };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+
+    // 3. Data Rows
+    let totalHeThong = 0;
+    let totalKHGioiThieu = 0;
+    let totalCTV = 0;
+
+    data.forEach(c => {
+      const date = c.startDate ? parseISO(c.startDate) : new Date(c.createdAt);
+      const dayStr = format(date, 'd/M');
+      const cost = parseInt(c.totalCost?.replace(/\D/g, '') || '0', 10);
+      
+      let heThong = 0;
+      let khGioiThieu = 0;
+      let ctv = 0;
+
+      const source = c.source || '';
+      if (source === 'Người quen giới thiệu' || source === 'KH giới thiệu') {
+        khGioiThieu = cost;
+        totalKHGioiThieu += cost;
+      } else if (source === 'CTV') {
+        ctv = cost;
+        totalCTV += cost;
+      } else {
+        heThong = cost;
+        totalHeThong += cost;
+      }
+
+      const row = worksheet.addRow([
+        dayStr,
+        c.name,
+        c.phone,
+        (c.services || []).join(', '),
+        formatCurrency(cost),
+        heThong ? formatCurrency(heThong) : '',
+        khGioiThieu ? formatCurrency(khGioiThieu) : '',
+        ctv ? formatCurrency(ctv) : '',
+        '', // Hẹn
+        '', // Chốt
+        ''  // Chăm sóc
+      ]);
+
+      row.eachCell(cell => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        cell.alignment = { vertical: 'middle' };
+      });
+      // Center some columns
+      row.getCell(1).alignment = { horizontal: 'center' };
+      row.getCell(3).alignment = { horizontal: 'center' };
+    });
+
+    // 4. Footer Row
+    const footerRow = worksheet.addRow([
+      'TỔNG', '', '', '', formatCurrency(total), formatCurrency(totalHeThong), formatCurrency(totalKHGioiThieu), formatCurrency(totalCTV), '', '', ''
+    ]);
+    worksheet.mergeCells(footerRow.number, 1, footerRow.number, 4);
+    
+    footerRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF0F0F0' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      cell.alignment = { vertical: 'middle' };
+    });
+    footerRow.getCell(1).alignment = { horizontal: 'center' };
+
+    // Generate and save
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `Bao_cao_doanh_thu_${month.replace('/', '_')}.xlsx`);
   };
 
   const copyToClipboard = (month: string, data: Customer[], total: number) => {
@@ -95,7 +215,7 @@ export default function Reports() {
       headers.join('\t'),
       ...rows.map(r => r.join('\t')),
       '',
-      `Tổng cộng\t\t\t${new Intl.NumberFormat('vi-VN').format(total)} đ`
+      `Tổng cộng\t\t\t${formatCurrency(total)}`
     ].join('\n');
 
     navigator.clipboard.writeText(textContent);
@@ -123,7 +243,7 @@ export default function Reports() {
             </div>
             <div>
               <p className="text-rose-100 text-xs lg:text-sm font-medium">Tổng doanh thu</p>
-              <h3 className="text-lg lg:text-2xl font-bold">{new Intl.NumberFormat('vi-VN').format(overallStats.totalRevenue)} đ</h3>
+              <h3 className="text-lg lg:text-2xl font-bold">{formatCurrency(overallStats.totalRevenue)}</h3>
             </div>
           </CardContent>
         </Card>
@@ -145,7 +265,7 @@ export default function Reports() {
             </div>
             <div>
               <p className="text-gray-500 dark:text-rose-300 text-xs lg:text-sm font-medium">Doanh thu TB / Khách</p>
-              <h3 className="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white">{new Intl.NumberFormat('vi-VN').format(Math.round(overallStats.avgRevenue))} đ</h3>
+              <h3 className="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(Math.round(overallStats.avgRevenue))}</h3>
             </div>
           </CardContent>
         </Card>
@@ -191,7 +311,7 @@ export default function Reports() {
                         <TableCell className="font-medium dark:text-white">{month}</TableCell>
                         <TableCell className="text-right text-gray-600 dark:text-rose-300/70">{data.customers.length}</TableCell>
                         <TableCell className="text-right font-semibold text-rose-600 dark:text-rose-400">
-                          {new Intl.NumberFormat('vi-VN').format(data.total)} đ
+                          {formatCurrency(data.total)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -224,9 +344,9 @@ export default function Reports() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1 sm:flex-none border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30"
-                      onClick={() => exportToCSV(selectedMonth!, selectedMonthData[1].customers, selectedMonthData[1].total)}
+                      onClick={() => exportToExcel(selectedMonth!, selectedMonthData[1].customers, selectedMonthData[1].total)}
                     >
-                      <FileDown className="w-4 h-4 mr-1 lg:mr-2" /> CSV
+                      <FileDown className="w-4 h-4 mr-1 lg:mr-2" /> Excel
                     </Button>
                   </div>
                 </CardHeader>
@@ -265,7 +385,7 @@ export default function Reports() {
                               <span className="text-xs text-gray-600 dark:text-rose-200">{c.source || 'N/A'}</span>
                             </TableCell>
                             <TableCell className="text-right font-semibold text-rose-600 dark:text-rose-400 py-2 lg:py-4 text-xs lg:text-sm">
-                              {c.totalCost || '0 đ'}
+                              {formatCurrency(c.totalCost || 0)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -275,7 +395,7 @@ export default function Reports() {
                   <div className="p-4 bg-rose-50/30 dark:bg-[#181a1b] border-t border-rose-100 dark:border-[#4a2b2d] flex justify-between items-center font-bold">
                     <span className="text-rose-900 dark:text-rose-100 text-sm lg:text-base">Tổng doanh thu:</span>
                     <span className="text-lg lg:text-xl text-rose-700 dark:text-rose-400">
-                      {new Intl.NumberFormat('vi-VN').format(selectedMonthData[1].total)} đ
+                      {formatCurrency(selectedMonthData[1].total)}
                     </span>
                   </div>
                 </CardContent>

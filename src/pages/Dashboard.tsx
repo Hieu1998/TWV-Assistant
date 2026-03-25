@@ -7,6 +7,7 @@ import { useLocalStorage } from '@/src/lib/useLocalStorage';
 import { Customer, Appointment } from '@/src/types';
 import { format, subDays, subMonths, subYears, parseISO, eachDayOfInterval, eachMonthOfInterval, eachYearOfInterval } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatCurrency } from '@/src/lib/utils';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -227,7 +228,7 @@ export default function Dashboard() {
                   tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(0)}M` : value >= 1000 ? `${(value / 1000).toFixed(0)}K` : value}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), 'Doanh thu']}
+                  formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
                   contentStyle={{ 
                     borderRadius: '12px', 
                     border: 'none', 
