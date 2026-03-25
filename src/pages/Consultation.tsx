@@ -18,21 +18,20 @@ export default function Consultation() {
   const handleGenerate = async () => {
     if (!customerMessage) return;
     
-    if (!process.env.GEMINI_API_KEY) {
-      setGeneratedResponse('Lỗi: Chưa cấu hình GEMINI_API_KEY. Vui lòng thêm API Key vào phần Settings/Secrets của AI Studio.');
-      return;
-    }
-
     setIsLoading(true);
     setGeneratedResponse('');
     
     try {
       const storedKey = localStorage.getItem('gemini_api_key');
-      if (!storedKey) {
-        setGeneratedResponse('Vui lòng cấu hình API Key trong phần cài đặt (biểu tượng chìa khóa) để sử dụng tính năng này.');
+      const apiKey = storedKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        setGeneratedResponse('Vui lòng cấu hình API Key trong phần cài đặt (biểu tượng chìa khóa 🔑) để sử dụng tính năng này.');
+        setIsLoading(false);
         return;
       }
-      const ai = new GoogleGenAI({ apiKey: storedKey });
+      
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `
         Bạn là một chuyên viên tư vấn (sales) xuất sắc và tận tâm tại một Thẩm Mỹ Viện uy tín.
         Hãy viết một câu trả lời thuyết phục, khéo léo để phản hồi lại tin nhắn của khách hàng.

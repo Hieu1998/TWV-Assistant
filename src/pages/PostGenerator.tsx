@@ -29,21 +29,20 @@ export default function PostGenerator() {
   const handleGenerate = async () => {
     if (!topic) return;
     
-    if (!process.env.GEMINI_API_KEY) {
-      setGeneratedPost('Lỗi: Chưa cấu hình GEMINI_API_KEY. Vui lòng thêm API Key vào phần Settings/Secrets của AI Studio.');
-      return;
-    }
-
     setIsLoading(true);
     setGeneratedPost('');
     
     try {
       const storedKey = localStorage.getItem('gemini_api_key');
-      if (!storedKey) {
-        setGeneratedPost('Vui lòng cấu hình API Key trong phần cài đặt (biểu tượng chìa khóa) để sử dụng tính năng này.');
+      const apiKey = storedKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        setGeneratedPost('Vui lòng cấu hình API Key trong phần cài đặt (biểu tượng chìa khóa 🔑) để sử dụng tính năng này.');
+        setIsLoading(false);
         return;
       }
-      const ai = new GoogleGenAI({ apiKey: storedKey });
+      
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `
         Bạn là một chuyên gia marketing và sales xuất sắc cho một Thẩm Mỹ Viện uy tín.
         Hãy viết một bài đăng Facebook thật hấp dẫn, thu hút khách hàng dựa trên các thông tin sau:

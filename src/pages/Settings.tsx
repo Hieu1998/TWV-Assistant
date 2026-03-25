@@ -26,6 +26,9 @@ export default function Settings() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    // Update last backup date
+    localStorage.setItem('crm_last_backup_date', new Date().toISOString());
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

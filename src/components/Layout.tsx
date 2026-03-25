@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PenTool, MessageCircleHeart, CalendarDays, Sparkles, Users, CalendarClock, Menu, X, Sun, Moon, Key, BarChart3, Settings } from 'lucide-react';
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
+import { LayoutDashboard, PenTool, MessageCircleHeart, CalendarDays, Sparkles, Users, CalendarClock, Menu, X, Sun, Moon, Key, BarChart3, Settings, AlertCircle, Download } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import ApiKeyModal from './ApiKeyModal';
 
@@ -33,7 +33,28 @@ export default function Layout() {
     return defaultKey;
   });
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showBackupReminder, setShowBackupReminder] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    // Check for last backup date
+    const lastBackup = localStorage.getItem('crm_last_backup_date');
+    if (!lastBackup) {
+      // If no backup ever, show reminder after 7 days of first use
+      const firstUse = localStorage.getItem('crm_first_use_date');
+      if (!firstUse) {
+        localStorage.setItem('crm_first_use_date', new Date().toISOString());
+      } else {
+        const daysSinceFirstUse = (new Date().getTime() - new Date(firstUse).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceFirstUse > 7) setShowBackupReminder(true);
+      }
+    } else {
+      const daysSinceLastBackup = (new Date().getTime() - new Date(lastBackup).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceLastBackup > 30) {
+        setShowBackupReminder(true);
+      }
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!apiKey) {
@@ -151,6 +172,22 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        {showBackupReminder && location.pathname !== '/settings' && (
+          <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between gap-4 sticky top-16 md:top-0 z-30 shadow-md">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <AlertCircle className="w-4 h-4" />
+              <span>Đã hơn 30 ngày bạn chưa sao lưu dữ liệu. Hãy sao lưu để tránh mất mát!</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to="/settings" className="bg-white text-amber-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-amber-50 transition-colors flex items-center gap-1">
+                <Download className="w-3 h-3" /> Sao lưu ngay
+              </Link>
+              <button onClick={() => setShowBackupReminder(false)} className="hover:bg-white/20 p-1 rounded-full transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="p-4 md:p-8 max-w-6xl mx-auto dark:bg-[#281718] min-h-full">
           <Outlet />
         </div>
