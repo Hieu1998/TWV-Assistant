@@ -10,4 +10,16 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
 }

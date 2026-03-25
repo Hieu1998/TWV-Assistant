@@ -88,7 +88,7 @@ export default function Layout() {
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   return (
-    <div className="flex h-screen bg-rose-50/30 dark:bg-[#181a1b] overflow-hidden transition-colors duration-200">
+    <div className="flex h-[100dvh] bg-rose-50/30 dark:bg-[#181a1b] overflow-hidden transition-colors duration-200 overscroll-none touch-manipulation">
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-[#181a1b]/80 dark:backdrop-blur-md border-b border-rose-100 dark:border-[#4a2b2d] flex items-center justify-between px-4 z-40 transition-colors duration-200">
         <div className="flex items-center">
@@ -173,7 +173,7 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0 scroll-smooth overscroll-contain momentum-scroll">
         {showBackupReminder && location.pathname !== '/settings' && (
           <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between gap-4 sticky top-16 md:top-0 z-30 shadow-md">
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -190,7 +190,7 @@ export default function Layout() {
             </div>
           </div>
         )}
-        <div className="p-4 md:p-8 max-w-6xl mx-auto dark:bg-[#281718] min-h-full">
+        <div className="p-4 md:p-8 pb-24 md:pb-8 pb-safe max-w-6xl mx-auto dark:bg-[#281718] min-h-full">
           <Outlet />
         </div>
       </main>
