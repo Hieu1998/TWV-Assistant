@@ -14,14 +14,12 @@ export default function Settings() {
     appointments, 
     services, 
     sources, 
-    upsertCustomer, 
-    upsertAppointment, 
-    upsertService, 
-    upsertSource, 
+    bulkImport, 
     clearAllData, 
     setConfigured 
   } = useSupabase();
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | 'none', message: string }>({ type: 'none', message: '' });
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const config = getSupabaseConfig();
   const [url, setUrl] = useState(config.url || '');
@@ -66,45 +64,29 @@ export default function Settings() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const data = JSON.parse(content);
 
-        // Import Services
-        if (data.services && Array.isArray(data.services)) {
-          for (const s of data.services) {
-            await upsertService(s);
-          }
-        }
-
-        // Import Sources
-        if (data.sources && Array.isArray(data.sources)) {
-          for (const src of data.sources) {
-            await upsertSource(src);
-          }
-        }
-
-        // Import Customers
-        if (data.customers && Array.isArray(data.customers)) {
-          for (const c of data.customers) {
-            await upsertCustomer(c);
-          }
-        }
-
-        // Import Appointments
-        if (data.appointments && Array.isArray(data.appointments)) {
-          for (const a of data.appointments) {
-            await upsertAppointment(a);
-          }
-        }
+        await bulkImport({
+          services: data.services,
+          sources: data.sources,
+          customers: data.customers,
+          appointments: data.appointments
+        });
 
         setImportStatus({ type: 'success', message: 'Dữ liệu đã được nhập thành công vào Supabase!' });
         setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
       } catch (error) {
         setImportStatus({ type: 'error', message: 'Lỗi khi nhập dữ liệu. Vui lòng kiểm tra lại file.' });
         setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
+      } finally {
+        setIsProcessing(false);
+        // Reset input
+        event.target.value = '';
       }
     };
     reader.readAsText(file);
@@ -112,11 +94,14 @@ export default function Settings() {
 
   const handleClearData = async () => {
     if (window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU TRÊN SUPABASE? Hành động này không thể hoàn tác.')) {
+      setIsProcessing(true);
       try {
         await clearAllData();
         setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
       } catch (error) {
         setImportStatus({ type: 'error', message: 'Lỗi khi xoá dữ liệu.' });
+      } finally {
+        setIsProcessing(false);
       }
       setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
     }
@@ -204,9 +189,14 @@ export default function Settings() {
                 type="file"
                 accept=".json"
                 onChange={handleImport}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                disabled={isProcessing}
               />
-              <Button variant="outline" className="w-full border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300">
+              <Button 
+                variant="outline" 
+                className="w-full border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300"
+                loading={isProcessing}
+              >
                 <Upload className="w-4 h-4 mr-2" /> Chọn file để khôi phục
               </Button>
             </div>
@@ -226,7 +216,7 @@ export default function Settings() {
           <p className="text-sm text-red-800 dark:text-red-300 max-w-xl">
             Hành động này sẽ xoá sạch danh sách khách hàng và tất cả lịch hẹn đang lưu trên trình duyệt này. Hãy chắc chắn bạn đã có bản sao lưu trước khi thực hiện.
           </p>
-          <Button onClick={handleClearData} variant="destructive" className="shrink-0">
+          <Button onClick={handleClearData} variant="destructive" className="shrink-0" loading={isProcessing}>
             <Trash2 className="w-4 h-4 mr-2" /> Xoá sạch dữ liệu
           </Button>
         </CardContent>

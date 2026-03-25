@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Customer, Appointment, Service, CustomerSource } from '@/src/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
@@ -24,13 +24,15 @@ export default function Customers() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
   
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [confirmScheduleModal, setConfirmScheduleModal] = useState<{isOpen: boolean, customer: Customer | null}>({isOpen: false, customer: null});
   const [autoScheduleDates, setAutoScheduleDates] = useState({ day1: format(addDays(new Date(), 1), 'yyyy-MM-dd'), day7: format(addDays(new Date(), 7), 'yyyy-MM-dd'), month1: format(addDays(new Date(), 30), 'yyyy-MM-dd') });
 
-  const getMonthlyRevenue = () => {
+  const monthlyRevenue = useMemo(() => {
     const revenueByMonth: { [key: string]: number } = {};
     customers.forEach(c => {
       if (c.status === 'Hậu phẫu' && c.totalCost) {
@@ -45,34 +47,41 @@ export default function Customers() {
       const [mB, yB] = b[0].split('/').map(Number);
       return yB !== yA ? yB - yA : mB - mA;
     });
-  };
-
-  const monthlyRevenue = getMonthlyRevenue();
+  }, [customers]);
 
   const handleAddCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) return;
-    const customer: Customer = {
-      id: crypto.randomUUID(),
-      ...newCustomer,
-      createdAt: new Date().toISOString(),
-      appointments: []
-    };
-    await upsertCustomer(customer);
-    setShowAddModal(false);
-    setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '' });
+    setIsSaving(true);
+    try {
+      const customer: Customer = {
+        id: crypto.randomUUID(),
+        ...newCustomer,
+        createdAt: new Date().toISOString(),
+        appointments: []
+      };
+      await upsertCustomer(customer);
+      setShowAddModal(false);
+      setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUpdateCustomer = async () => {
     if (!editingCustomer) return;
-    
-    const oldCustomer = customers.find(c => c.id === editingCustomer.id);
-    const statusChangedToHauPhau = oldCustomer?.status !== 'Hậu phẫu' && editingCustomer.status === 'Hậu phẫu';
+    setIsSaving(true);
+    try {
+      const oldCustomer = customers.find(c => c.id === editingCustomer.id);
+      const statusChangedToHauPhau = oldCustomer?.status !== 'Hậu phẫu' && editingCustomer.status === 'Hậu phẫu';
 
-    await upsertCustomer(editingCustomer);
-    setEditingCustomer(null);
+      await upsertCustomer(editingCustomer);
+      setEditingCustomer(null);
 
-    if (statusChangedToHauPhau) {
-      setConfirmScheduleModal({ isOpen: true, customer: editingCustomer });
+      if (statusChangedToHauPhau) {
+        setConfirmScheduleModal({ isOpen: true, customer: editingCustomer });
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -83,9 +92,14 @@ export default function Customers() {
 
   const confirmDeleteCustomer = async () => {
     if (customerToDelete) {
-      await deleteCustomer(customerToDelete.id);
-      setCustomerToDelete(null);
-      setIsDeleteModalOpen(false);
+      setIsSaving(true);
+      try {
+        await deleteCustomer(customerToDelete.id);
+        setCustomerToDelete(null);
+        setIsDeleteModalOpen(false);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -114,18 +128,22 @@ export default function Customers() {
   const confirmAutoSchedule = async () => {
     if (!confirmScheduleModal.customer) return;
     const customer = confirmScheduleModal.customer;
-    
-    const appt1: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' };
-    const appt7: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' };
-    const appt30: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' };
-    
-    await Promise.all([
-      upsertAppointment(appt1),
-      upsertAppointment(appt7),
-      upsertAppointment(appt30)
-    ]);
-    
-    setConfirmScheduleModal({ isOpen: false, customer: null });
+    setIsSaving(true);
+    try {
+      const appt1: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' };
+      const appt7: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' };
+      const appt30: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' };
+      
+      await Promise.all([
+        upsertAppointment(appt1),
+        upsertAppointment(appt7),
+        upsertAppointment(appt30)
+      ]);
+      
+      setConfirmScheduleModal({ isOpen: false, customer: null });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,7 +164,26 @@ export default function Customers() {
     setEditingCustomer({...editingCustomer, totalCost: formatted});
   };
 
-  const filteredCustomers = customers.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.phone.includes(searchTerm));
+  const filteredCustomers = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return customers.filter(c => 
+      c.name.toLowerCase().includes(lowerSearch) || 
+      c.phone.includes(searchTerm)
+    );
+  }, [customers, searchTerm]);
+
+  const customersByStatus = useMemo(() => {
+    const grouped: { [key in Customer['status']]: Customer[] } = {
+      'Tiềm năng': [],
+      'Đang tư vấn': [],
+      'Đã chốt': [],
+      'Hậu phẫu': []
+    };
+    filteredCustomers.forEach(c => {
+      grouped[c.status].push(c);
+    });
+    return grouped;
+  }, [filteredCustomers]);
 
   const statuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu'];
 
@@ -201,11 +238,11 @@ export default function Customers() {
             <h3 className="font-semibold text-gray-700 dark:text-rose-200 mb-4 flex items-center justify-between">
               {status}
               <span className="bg-white dark:bg-[#181a1b] text-xs py-1 px-2 rounded-full border border-gray-200 dark:border-[#4a2b2d] text-gray-700 dark:text-rose-300">
-                {filteredCustomers.filter(c => c.status === status).length}
+                {customersByStatus[status].length}
               </span>
             </h3>
             <div className="space-y-3 dark:bg-[#181a1b] rounded-lg">
-              {filteredCustomers.filter(c => c.status === status).map(customer => (
+              {customersByStatus[status].map(customer => (
                 <Card key={customer.id} className="shadow-sm border-rose-100/50 dark:border-[#4a2b2d] hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors cursor-pointer bg-white dark:bg-[#281718]" onClick={() => setEditingCustomer(customer)}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
@@ -364,11 +401,12 @@ export default function Customers() {
               </div>
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setShowAddModal(false)}>Hủy</Button>
+              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving}>Hủy</Button>
               <Button 
                 onClick={handleAddCustomer} 
                 className="bg-rose-600 hover:bg-rose-700 text-white"
                 disabled={!newCustomer.name.trim() || !newCustomer.phone.trim()}
+                loading={isSaving}
               >
                 Lưu khách hàng
               </Button>
@@ -516,10 +554,11 @@ export default function Customers() {
               </div>
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setEditingCustomer(null)}>Hủy</Button>
+              <Button variant="outline" onClick={() => setEditingCustomer(null)} disabled={isSaving}>Hủy</Button>
               <Button 
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"
+                disabled={isSaving}
                 onClick={() => {
                   const customer = editingCustomer;
                   setEditingCustomer(null);
@@ -532,6 +571,7 @@ export default function Customers() {
                 onClick={handleUpdateCustomer} 
                 className="bg-rose-600 hover:bg-rose-700 text-white"
                 disabled={!editingCustomer.name.trim() || !editingCustomer.phone.trim()}
+                loading={isSaving}
               >
                 Lưu thay đổi
               </Button>
@@ -570,8 +610,8 @@ export default function Customers() {
               </div>
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setConfirmScheduleModal({ isOpen: false, customer: null })}>Bỏ qua</Button>
-              <Button onClick={confirmAutoSchedule} className="bg-rose-600 hover:bg-rose-700 text-white">Tạo lịch ngay</Button>
+              <Button variant="outline" onClick={() => setConfirmScheduleModal({ isOpen: false, customer: null })} disabled={isSaving}>Bỏ qua</Button>
+              <Button onClick={confirmAutoSchedule} className="bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Tạo lịch ngay</Button>
             </div>
           </Card>
         </div>
@@ -588,8 +628,8 @@ export default function Customers() {
               </CardDescription>
             </CardHeader>
             <div className="p-6 pt-0 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Hủy</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCustomer}>Xác nhận xóa</Button>
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving}>Hủy</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCustomer} loading={isSaving}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>

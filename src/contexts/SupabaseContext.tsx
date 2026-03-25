@@ -20,6 +20,12 @@ interface SupabaseContextType {
   deleteService: (id: string) => Promise<void>;
   upsertSource: (source: CustomerSource) => Promise<void>;
   deleteSource: (id: string) => Promise<void>;
+  bulkImport: (data: {
+    customers?: Customer[];
+    appointments?: Appointment[];
+    services?: Service[];
+    sources?: CustomerSource[];
+  }) => Promise<void>;
   clearAllData: () => Promise<void>;
 }
 
@@ -226,6 +232,71 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     await refreshData();
   };
 
+  const bulkImport = async (data: {
+    customers?: Customer[];
+    appointments?: Appointment[];
+    services?: Service[];
+    sources?: CustomerSource[];
+  }) => {
+    if (!supabase) return;
+    setLoading(true);
+    try {
+      const promises = [];
+
+      if (data.services && data.services.length > 0) {
+        promises.push(supabase.from('services').upsert(data.services.map(s => ({ id: s.id, name: s.name }))));
+      }
+
+      if (data.sources && data.sources.length > 0) {
+        promises.push(supabase.from('customer_sources').upsert(data.sources.map(s => ({ id: s.id, name: s.name }))));
+      }
+
+      if (data.customers && data.customers.length > 0) {
+        promises.push(supabase.from('customers').upsert(data.customers.map(c => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          services: c.services,
+          status: c.status,
+          notes: c.notes,
+          source: c.source,
+          total_cost: c.totalCost,
+          start_date: c.startDate,
+          discharge_date: c.dischargeDate,
+          appointments_dates: c.appointments,
+          created_at: c.createdAt
+        }))));
+      }
+
+      if (data.appointments && data.appointments.length > 0) {
+        promises.push(supabase.from('appointments').upsert(data.appointments.map(a => ({
+          id: a.id,
+          customer_id: a.customerId,
+          customer_name: a.customerName,
+          date: a.date,
+          time: a.time,
+          type: a.type,
+          status: a.status,
+          notes: a.notes,
+          service_name: a.serviceName,
+          created_at: (a as any).createdAt
+        }))));
+      }
+
+      const results = await Promise.all(promises);
+      results.forEach((res, idx) => {
+        if (res.error) console.error(`Error in bulk import step ${idx}:`, res.error);
+      });
+
+      await refreshData();
+    } catch (error) {
+      console.error('Unexpected error in bulk import:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearAllData = async () => {
     if (!supabase) return;
     setLoading(true);
@@ -262,6 +333,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       deleteService,
       upsertSource,
       deleteSource,
+      bulkImport,
       clearAllData
     }}>
       {children}

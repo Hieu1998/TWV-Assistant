@@ -19,7 +19,24 @@ export default function Appointments() {
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  const filteredAppts = appointments.filter(a => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
+  const filteredAppts = useMemo(() => {
+    return appointments
+      .filter(a => a.date === selectedDate)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [appointments, selectedDate]);
+
+  const apptsByDate = useMemo(() => {
+    const map: { [key: string]: Appointment[] } = {};
+    appointments.forEach(appt => {
+      if (!map[appt.date]) map[appt.date] = [];
+      map[appt.date].push(appt);
+    });
+    // Sort each day's appointments by time
+    Object.keys(map).forEach(date => {
+      map[date].sort((a, b) => a.time.localeCompare(b.time));
+    });
+    return map;
+  }, [appointments]);
 
   const scrollToList = () => {
     if (listRef.current) {
@@ -212,7 +229,7 @@ export default function Appointments() {
             
             {calendarDays.map((day, dayIdx) => {
               const dateStr = format(day, 'yyyy-MM-dd');
-              const dayAppts = appointments.filter(a => a.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
+              const dayAppts = apptsByDate[dateStr] || [];
               const isSelected = dateStr === selectedDate;
               const isCurrentMonth = isSameMonth(day, currentMonth);
               

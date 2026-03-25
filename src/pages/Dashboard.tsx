@@ -15,9 +15,20 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('1y');
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const todaysAppts = appointments.filter(a => a.date === todayStr).sort((a, b) => a.time.localeCompare(b.time));
-  const pendingAppts = todaysAppts.filter(a => a.status === 'Chờ khám');
-  const newLeads = customers.filter(c => c.status === 'Tiềm năng');
+  
+  const todaysAppts = useMemo(() => {
+    return appointments
+      .filter(a => a.date === todayStr)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [appointments, todayStr]);
+
+  const pendingAppts = useMemo(() => {
+    return todaysAppts.filter(a => a.status === 'Chờ khám');
+  }, [todaysAppts]);
+
+  const newLeads = useMemo(() => {
+    return customers.filter(c => c.status === 'Tiềm năng');
+  }, [customers]);
 
   const revenueData = useMemo(() => {
     const now = new Date();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -53,9 +53,12 @@ export default function Sources() {
     }
   };
 
-  const filteredSources = sources.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSources = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return sources.filter(s => 
+      s.name.toLowerCase().includes(lowerSearch)
+    );
+  }, [sources, searchTerm]);
 
   return (
     <div className="space-y-6">
