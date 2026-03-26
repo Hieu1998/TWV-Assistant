@@ -17,6 +17,7 @@ export default function Appointments() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   
   const [showAddModal, setShowAddModal] = useState(false);
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newAppt, setNewAppt] = useState({ customerId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '09:00', type: 'Tái khám' as const, notes: '', serviceName: '' });
 
@@ -245,7 +246,16 @@ export default function Appointments() {
                   {filteredAppts.map(appt => {
                     const customer = getCustomerDetails(appt.customerId);
                     return (
-                      <div key={appt.id} className={`p-3 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${appt.status === 'Đã xong' ? 'bg-gray-50 dark:bg-[#181a1b] border-gray-200 dark:border-[#4a2b2d] opacity-70' : appt.status === 'Hủy' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 opacity-70' : 'bg-white dark:bg-[#181a1b] border-rose-100 dark:border-[#4a2b2d] shadow-sm'}`}>
+                      <div 
+                        key={appt.id} 
+                        className={cn(
+                          "p-3 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all cursor-pointer",
+                          appt.status === 'Đã xong' ? 'bg-gray-50 dark:bg-[#181a1b] border-gray-200 dark:border-[#4a2b2d] opacity-70' : 
+                          appt.status === 'Hủy' ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 opacity-70' : 
+                          'bg-white dark:bg-[#181a1b] border-rose-100 dark:border-[#4a2b2d] shadow-sm hover:border-rose-300'
+                        )}
+                        onClick={() => customer && setViewingCustomer(customer)}
+                      >
                         <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                           <div className={`p-2.5 sm:p-3 rounded-full shrink-0 ${appt.status === 'Đã xong' ? 'bg-gray-200 dark:bg-[#181a1b] text-gray-500 dark:text-rose-300/50' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300'}`}>
                             <Clock className="w-5 h-5" />
@@ -262,14 +272,16 @@ export default function Appointments() {
                                 {appt.status === 'Đã xong' && <span className="text-[10px] sm:text-xs bg-gray-200 dark:bg-[#181a1b] text-gray-700 dark:text-rose-200 px-2 py-0.5 rounded-full whitespace-nowrap">Đã xong</span>}
                                 {appt.status === 'Hủy' && <span className="text-[10px] sm:text-xs bg-red-200 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full whitespace-nowrap">Đã hủy</span>}
                               </div>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600 dark:text-rose-300/50 dark:hover:text-red-400 shrink-0" onClick={() => handleDeleteAppt(appt)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600 dark:text-rose-300/50 dark:hover:text-red-400 shrink-0" onClick={(e) => { e.stopPropagation(); handleDeleteAppt(appt); }}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                            <div className="flex items-center text-gray-600 dark:text-rose-200 mt-1 min-w-0">
-                              <User className="w-4 h-4 mr-1 shrink-0" /> 
-                              <span className="font-medium truncate">{appt.customerName}</span>
-                              {customer && <span className="ml-2 text-xs sm:text-sm text-gray-400 dark:text-rose-300/70 truncate">({customer.phone})</span>}
+                            <div className="flex flex-col text-gray-600 dark:text-rose-200 mt-1 min-w-0">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 mr-1 shrink-0" /> 
+                                <span className="font-bold truncate text-base">{appt.customerName}</span>
+                              </div>
+                              {customer && <span className="text-xs sm:text-sm text-gray-400 dark:text-rose-300/70 truncate">{customer.phone}</span>}
                             </div>
                             {customer && customer.services && customer.services.length > 0 && (
                               <div className="text-[11px] text-rose-600 dark:text-rose-400 mt-2 italic bg-rose-50/50 dark:bg-rose-900/10 p-2 rounded-lg border border-rose-100/50 dark:border-rose-900/20">
@@ -498,6 +510,58 @@ export default function Appointments() {
             <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
               <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
               <Button className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteAppt} loading={isSaving}>Xác nhận xóa</Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {viewingCustomer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <Card className="w-full max-w-md shadow-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5 text-rose-600" />
+                Thông tin khách hàng
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-gray-500">Họ tên</Label>
+                  <p className="font-bold text-gray-900 dark:text-white">{viewingCustomer.name}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Số điện thoại</Label>
+                  <p className="font-bold text-gray-900 dark:text-white">{viewingCustomer.phone}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Trạng thái</Label>
+                <p className="font-bold text-rose-600">{viewingCustomer.status}</p>
+              </div>
+              {viewingCustomer.services && viewingCustomer.services.length > 0 && (
+                <div>
+                  <Label className="text-xs text-gray-500">Dịch vụ đã đăng ký</Label>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {viewingCustomer.services.map((s, i) => (
+                      <span key={i} className="px-2 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-200 text-xs rounded-full border border-rose-100 dark:border-rose-900/30">
+                        {s.replace(/^\[.*?\]\s*/, '')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewingCustomer.notes && (
+                <div>
+                  <Label className="text-xs text-gray-500">Ghi chú</Label>
+                  <p className="text-sm text-gray-700 dark:text-rose-100 bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg border border-gray-100 dark:border-zinc-700 italic">
+                    "{viewingCustomer.notes}"
+                  </p>
+                </div>
+              )}
+            </CardContent>
+            <div className="p-6 pt-0 flex justify-end">
+              <Button onClick={() => setViewingCustomer(null)} className="bg-rose-600 hover:bg-rose-700 text-white">Đóng</Button>
             </div>
           </Card>
         </div>
