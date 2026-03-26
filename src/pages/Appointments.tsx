@@ -342,10 +342,10 @@ export default function Appointments() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="min-w-[700px] sm:min-w-0 grid grid-cols-7 gap-px bg-rose-100 dark:bg-[#4a2b2d]">
+          <div className="scrollbar-hide">
+            <div className="grid grid-cols-7 gap-px bg-rose-100 dark:bg-[#4a2b2d]">
               {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
-                <div key={day} className="bg-rose-50/50 dark:bg-[#181a1b] py-4 text-center text-[10px] font-black text-rose-900/40 dark:text-rose-300/30 uppercase tracking-[0.2em]">
+                <div key={day} className="bg-rose-50/50 dark:bg-[#181a1b] py-2 md:py-4 text-center text-[9px] md:text-[10px] font-black text-rose-900/40 dark:text-rose-300/30 uppercase tracking-tighter md:tracking-[0.2em]">
                   {day}
                 </div>
               ))}
@@ -362,14 +362,14 @@ export default function Appointments() {
                     key={dayIdx}
                     onClick={() => handleDateSelect(dateStr)}
                     className={cn(
-                      "min-h-[100px] md:min-h-[140px] p-2 transition-all cursor-pointer relative group",
+                      "min-h-[50px] md:min-h-[140px] p-1 md:p-2 transition-all cursor-pointer relative group",
                       isCurrentMonth ? "bg-white dark:bg-[#181a1b]" : "bg-gray-50/50 dark:bg-zinc-900/30",
                       isSelected ? "ring-2 ring-inset ring-rose-500 bg-rose-50/30 dark:bg-rose-900/10 z-10" : "md:hover:bg-rose-50/20 md:hover:bg-rose-900/5"
                     )}
                   >
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start mb-1 md:mb-2">
                       <span className={cn(
-                        "text-xs font-black w-7 h-7 flex items-center justify-center rounded-full transition-colors",
+                        "text-[10px] md:text-xs font-black w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full transition-colors",
                         isToday ? "bg-rose-600 text-white shadow-md shadow-rose-600/20" : 
                         isSelected ? "text-rose-600" :
                         isCurrentMonth ? "text-gray-900 dark:text-white" : "text-gray-300 dark:text-rose-300/20"
@@ -377,12 +377,12 @@ export default function Appointments() {
                         {format(day, 'd')}
                       </span>
                       {dayAppts.length > 0 && (
-                        <span className="text-[10px] font-black bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 px-1.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-500/30">
+                        <span className="text-[8px] md:text-[10px] font-black bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 px-1 md:px-1.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-500/30">
                           {dayAppts.length}
                         </span>
                       )}
                     </div>
-                    <div className="space-y-1 overflow-hidden">
+                    <div className="hidden md:block space-y-1 overflow-hidden">
                       {dayAppts.slice(0, 3).map(appt => (
                         <div key={appt.id} className={cn(
                           "text-[9px] font-bold truncate px-1.5 py-0.5 rounded border leading-tight",
