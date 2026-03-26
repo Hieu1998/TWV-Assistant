@@ -142,7 +142,7 @@ export default function Layout() {
                   'flex items-center px-3 py-3 md:py-2.5 text-sm font-medium rounded-md transition-colors',
                   isActive
                     ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-900 dark:text-rose-300'
-                    : 'text-gray-600 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-[#3a2224] hover:text-rose-900 dark:hover:text-white'
+                    : 'text-gray-600 dark:text-rose-200 md:hover:bg-rose-50 md:hover:dark:bg-[#3a2224] md:hover:text-rose-900 md:hover:dark:text-white'
                 )
               }
             >

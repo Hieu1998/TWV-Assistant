@@ -140,7 +140,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card className="hover:shadow-lg hover:-translate-y-1 transition-all border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/appointments')}>
+        <Card className="border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/appointments')}>
           <CardHeader className="pb-2 relative">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <CalendarClock className="w-12 h-12 text-rose-600" />
@@ -164,7 +164,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg hover:-translate-y-1 transition-all border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/customers')}>
+        <Card className="border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/customers')}>
           <CardHeader className="pb-2 relative">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Users className="w-12 h-12 text-rose-600" />
@@ -182,7 +182,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg hover:-translate-y-1 transition-all border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/post-generator')}>
+        <Card className="border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/post-generator')}>
           <CardHeader className="pb-2 relative">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <PenTool className="w-12 h-12 text-rose-600" />
@@ -199,7 +199,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg hover:-translate-y-1 transition-all border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/consultation')}>
+        <Card className="border-rose-100 dark:border-[#4a2b2d] cursor-pointer bg-white dark:bg-[#281718] group overflow-hidden" onClick={() => navigate('/consultation')}>
           <CardHeader className="pb-2 relative">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <MessageCircleHeart className="w-12 h-12 text-rose-600" />
@@ -245,9 +245,9 @@ export default function Dashboard() {
             ))}
           </div>
         </CardHeader>
-        <CardContent className="pt-8 px-2 sm:px-6">
+        <CardContent className="pt-8 px-2 sm:px-6 min-h-[350px]">
           <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" debounce={100}>
               <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

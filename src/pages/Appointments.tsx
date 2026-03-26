@@ -364,7 +364,7 @@ export default function Appointments() {
                     className={cn(
                       "min-h-[100px] md:min-h-[140px] p-2 transition-all cursor-pointer relative group",
                       isCurrentMonth ? "bg-white dark:bg-[#181a1b]" : "bg-gray-50/50 dark:bg-zinc-900/30",
-                      isSelected ? "ring-2 ring-inset ring-rose-500 bg-rose-50/30 dark:bg-rose-900/10 z-10" : "hover:bg-rose-50/20 dark:hover:bg-rose-900/5"
+                      isSelected ? "ring-2 ring-inset ring-rose-500 bg-rose-50/30 dark:bg-rose-900/10 z-10" : "md:hover:bg-rose-50/20 md:hover:bg-rose-900/5"
                     )}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -470,11 +470,11 @@ export default function Appointments() {
                 <Input value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} placeholder="VD: Nhắc khách nhịn ăn sáng..." />
               </div>
             </CardContent>
-            <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving}>Hủy</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
               <Button 
                 onClick={handleAddAppt} 
-                className="bg-rose-600 hover:bg-rose-700 text-white" 
+                className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white" 
                 disabled={!newAppt.customerId || !newAppt.date || !newAppt.time}
                 loading={isSaving}
               >
@@ -495,9 +495,9 @@ export default function Appointments() {
                 Hành động này không thể hoàn tác.
               </div>
             </CardHeader>
-            <div className="p-6 pt-0 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving}>Hủy</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteAppt} loading={isSaving}>Xác nhận xóa</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
+              <Button className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteAppt} loading={isSaving}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>

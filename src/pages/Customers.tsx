@@ -7,7 +7,7 @@ import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { addDays, format } from 'date-fns';
-import { formatCurrency, generateUUID } from '@/src/lib/utils';
+import { formatCurrency, generateUUID, cn } from '@/src/lib/utils';
 
 export default function Customers() {
   const { 
@@ -251,9 +251,9 @@ export default function Customers() {
         />
       </div>
 
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 xl:grid-cols-4 scrollbar-hide">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 xl:grid-cols-4 scrollbar-hide scroll-smooth overscroll-x-contain">
         {allStatuses.map(status => (
-          <div key={status} className="bg-gray-50/50 dark:bg-[#181a1b] rounded-2xl p-4 border border-gray-100 dark:border-[#4a2b2d] min-w-[85vw] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 flex flex-col h-full">
+          <div key={status} className="bg-gray-50/50 dark:bg-[#181a1b] rounded-2xl p-4 border border-gray-100 dark:border-[#4a2b2d] min-w-[85vw] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 flex flex-col h-full scroll-mt-4">
             <h3 className="font-bold text-gray-800 dark:text-rose-100 mb-4 flex items-center justify-between px-1">
               <span className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${
@@ -273,7 +273,7 @@ export default function Customers() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start gap-2">
                       <div className="font-bold text-gray-900 dark:text-white text-base group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">{customer.name}</div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 dark:text-rose-300/50 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}>
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
@@ -292,10 +292,10 @@ export default function Customers() {
                       </div>
                     )}
                     
-                    <div className="flex flex-wrap gap-1.5 mt-3">
+                    <div className="flex flex-col gap-1.5 mt-3">
                       {customer.services && customer.services.length > 0 ? (
                         customer.services.map((s, i) => (
-                          <span key={i} className="text-[10px] text-rose-600 dark:text-rose-300 font-bold bg-rose-50 dark:bg-rose-500/20 px-2 py-0.5 rounded-lg border border-rose-100/50 dark:border-rose-500/20 break-words max-w-full">
+                          <span key={i} className="text-[10px] text-rose-600 dark:text-rose-300 font-bold bg-rose-50 dark:bg-rose-500/20 px-2.5 py-1 rounded-lg border border-rose-100/50 dark:border-rose-500/20 break-words w-full block">
                             {s.replace(/^\[.*?\]\s*/, '')}
                           </span>
                         ))
@@ -462,11 +462,11 @@ export default function Customers() {
                 </select>
               </div>
             </CardContent>
-            <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving}>Hủy</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
               <Button 
                 onClick={handleAddCustomer} 
-                className="bg-rose-600 hover:bg-rose-700 text-white"
+                className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white"
                 disabled={!newCustomer.name.trim() || !newCustomer.phone.trim()}
                 loading={isSaving}
               >
@@ -642,11 +642,11 @@ export default function Customers() {
                 </div>
               </div>
             </CardContent>
-            <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setEditingCustomer(null)} disabled={isSaving}>Hủy</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setEditingCustomer(null)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
               <Button 
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"
                 disabled={isSaving}
                 onClick={() => {
                   const customer = editingCustomer;
@@ -658,7 +658,7 @@ export default function Customers() {
               </Button>
               <Button 
                 onClick={handleUpdateCustomer} 
-                className="bg-rose-600 hover:bg-rose-700 text-white"
+                className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white"
                 disabled={!editingCustomer.name.trim() || !editingCustomer.phone.trim()}
                 loading={isSaving}
               >
@@ -690,9 +690,9 @@ export default function Customers() {
                 </div>
               </div>
             </CardContent>
-            <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setConfirmScheduleModal({ isOpen: false, customer: null })} disabled={isSaving}>Bỏ qua</Button>
-              <Button onClick={confirmAutoSchedule} className="bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Tạo lịch ngay</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setConfirmScheduleModal({ isOpen: false, customer: null })} disabled={isSaving} className="w-full sm:w-auto">Bỏ qua</Button>
+              <Button onClick={confirmAutoSchedule} className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Tạo lịch ngay</Button>
             </div>
           </Card>
         </div>
@@ -708,9 +708,9 @@ export default function Customers() {
                 Mọi lịch hẹn liên quan cũng sẽ bị xóa. Hành động này không thể hoàn tác.
               </CardDescription>
             </CardHeader>
-            <div className="p-6 pt-0 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving}>Hủy</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCustomer} loading={isSaving}>Xác nhận xóa</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
+              <Button className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCustomer} loading={isSaving}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>

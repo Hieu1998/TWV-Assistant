@@ -192,9 +192,9 @@ export default function Services() {
                   />
                 </div>
               </CardContent>
-              <div className="p-6 pt-0 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Hủy</Button>
-                <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Lưu</Button>
+              <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
+                <Button type="submit" className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Lưu</Button>
               </div>
             </form>
           </Card>
@@ -208,9 +208,9 @@ export default function Services() {
               <CardTitle>Xác nhận xóa</CardTitle>
               <CardDescription>Bạn có chắc chắn muốn xóa dịch vụ này? Hành động này không thể hoàn tác.</CardDescription>
             </CardHeader>
-            <div className="p-6 pt-0 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving}>Hủy</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete} loading={isSaving}>Xác nhận xóa</Button>
+            <div className="p-6 pt-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving} className="w-full sm:w-auto">Hủy</Button>
+              <Button className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete} loading={isSaving}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>

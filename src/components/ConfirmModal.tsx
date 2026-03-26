@@ -38,13 +38,14 @@ export function ConfirmModal({
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             {message}
           </p>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={onCancel}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">
               {cancelText}
             </Button>
             <Button 
               variant={isDestructive ? "destructive" : "default"} 
               onClick={onConfirm}
+              className="w-full sm:w-auto"
             >
               {confirmText}
             </Button>
