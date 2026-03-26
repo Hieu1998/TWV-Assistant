@@ -27,7 +27,7 @@ export default function PostGenerator() {
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    if (!topic) return;
+    if (!topic || isLoading) return;
     
     setIsLoading(true);
     setGeneratedPost('');

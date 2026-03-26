@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign, Trash2 } from 'lucide-react';
+import { Plus, Search, Phone, CheckCircle, CalendarClock, Edit, Calendar as CalendarIcon, DollarSign, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { addDays, format } from 'date-fns';
-import { formatCurrency } from '@/src/lib/utils';
+import { formatCurrency, generateUUID } from '@/src/lib/utils';
 
 export default function Customers() {
   const { 
@@ -25,12 +25,34 @@ export default function Customers() {
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
   
   const [isSaving, setIsSaving] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+  };
   
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [confirmScheduleModal, setConfirmScheduleModal] = useState<{isOpen: boolean, customer: Customer | null}>({isOpen: false, customer: null});
   const [autoScheduleDates, setAutoScheduleDates] = useState({ day1: format(addDays(new Date(), 1), 'yyyy-MM-dd'), day7: format(addDays(new Date(), 7), 'yyyy-MM-dd'), month1: format(addDays(new Date(), 30), 'yyyy-MM-dd') });
+
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, { id: string, name: string, original: string }[]> = {};
+    services.forEach(s => {
+      const match = s.name.match(/^\[(.*?)\]\s*(.*)$/);
+      const category = match ? match[1] : 'Khác';
+      const name = match ? match[2] : s.name;
+      
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push({ id: s.id, name, original: s.name });
+    });
+    return groups;
+  }, [services]);
 
   const monthlyRevenue = useMemo(() => {
     const revenueByMonth: { [key: string]: number } = {};
@@ -50,11 +72,11 @@ export default function Customers() {
   }, [customers]);
 
   const handleAddCustomer = async () => {
-    if (!newCustomer.name || !newCustomer.phone) return;
+    if (!newCustomer.name || !newCustomer.phone || isSaving) return;
     setIsSaving(true);
     try {
       const customer: Customer = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         ...newCustomer,
         createdAt: new Date().toISOString(),
         appointments: []
@@ -68,7 +90,7 @@ export default function Customers() {
   };
 
   const handleUpdateCustomer = async () => {
-    if (!editingCustomer) return;
+    if (!editingCustomer || isSaving) return;
     setIsSaving(true);
     try {
       const oldCustomer = customers.find(c => c.id === editingCustomer.id);
@@ -91,7 +113,7 @@ export default function Customers() {
   };
 
   const confirmDeleteCustomer = async () => {
-    if (customerToDelete) {
+    if (customerToDelete && !isSaving) {
       setIsSaving(true);
       try {
         await deleteCustomer(customerToDelete.id);
@@ -126,13 +148,13 @@ export default function Customers() {
   };
 
   const confirmAutoSchedule = async () => {
-    if (!confirmScheduleModal.customer) return;
+    if (!confirmScheduleModal.customer || isSaving) return;
     const customer = confirmScheduleModal.customer;
     setIsSaving(true);
     try {
-      const appt1: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' };
-      const appt7: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' };
-      const appt30: Appointment = { id: crypto.randomUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' };
+      const appt1: Appointment = { id: generateUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám ngày 1 (Hút dịch/Kiểm tra)' };
+      const appt7: Appointment = { id: generateUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.day7, time: '09:00', type: 'Cắt chỉ', status: 'Chờ khám', notes: 'Cắt chỉ ngày 7' };
+      const appt30: Appointment = { id: generateUUID(), customerId: customer.id, customerName: customer.name, date: autoScheduleDates.month1, time: '09:00', type: 'Tái khám', status: 'Chờ khám', notes: 'Tái khám 1 tháng' };
       
       await Promise.all([
         upsertAppointment(appt1),
@@ -268,7 +290,7 @@ export default function Customers() {
                       {customer.services && customer.services.length > 0 ? (
                         customer.services.map((s, i) => (
                           <span key={i} className="text-[10px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/20 px-2 py-0.5 rounded">
-                            {s}
+                            {s.replace(/^\[.*?\]\s*/, '')}
                           </span>
                         ))
                       ) : (
@@ -340,27 +362,54 @@ export default function Customers() {
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ quan tâm</Label>
-                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
-                  {services.map(s => {
-                    const isSelected = newCustomer.services.includes(s.name);
+                <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {Object.entries(groupedServices).map(([category, items]: [string, any[]]) => {
+                    const isExpanded = expandedCategories.includes(category);
+                    const selectedCount = items.filter(item => newCustomer.services.includes(item.original)).length;
                     return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          const next = isSelected 
-                            ? newCustomer.services.filter(name => name !== s.name)
-                            : [...newCustomer.services, s.name];
-                          setNewCustomer({...newCustomer, services: next});
-                        }}
-                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                          isSelected 
-                            ? 'bg-rose-600 text-white border-rose-600' 
-                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
-                        }`}
-                      >
-                        {s.name}
-                      </button>
+                      <div key={category} className="border border-gray-100 dark:border-[#4a2b2d] rounded-md overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(category)}
+                          className="w-full flex items-center justify-between p-2 bg-gray-50 dark:bg-[#281718] hover:bg-gray-100 dark:hover:bg-[#3a2224] transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
+                            <h5 className="font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">{category}</h5>
+                          </div>
+                          {selectedCount > 0 && (
+                            <span className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 px-2 py-0.5 rounded-full font-medium">
+                              {selectedCount} đã chọn
+                            </span>
+                          )}
+                        </button>
+                        {isExpanded && (
+                          <div className="p-2 bg-white dark:bg-[#181a1b] flex flex-wrap gap-2">
+                            {items.map(item => {
+                              const isSelected = newCustomer.services.includes(item.original);
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const next = isSelected 
+                                      ? newCustomer.services.filter(name => name !== item.original)
+                                      : [...newCustomer.services, item.original];
+                                    setNewCustomer({...newCustomer, services: next});
+                                  }}
+                                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                    isSelected 
+                                      ? 'bg-rose-600 text-white border-rose-600' 
+                                      : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                                  }`}
+                                >
+                                  {item.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                   {services.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục dịch vụ</p>}
@@ -432,28 +481,55 @@ export default function Customers() {
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ</Label>
-                <div className="flex flex-wrap gap-2 p-2 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
-                  {services.map(s => {
-                    const isSelected = editingCustomer.services?.includes(s.name);
+                <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-md dark:bg-[#181a1b] dark:border-[#4a2b2d]">
+                  {Object.entries(groupedServices).map(([category, items]: [string, any[]]) => {
+                    const isExpanded = expandedCategories.includes(category);
+                    const selectedCount = items.filter(item => editingCustomer.services?.includes(item.original)).length;
                     return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          const currentServices = editingCustomer.services || [];
-                          const next = isSelected 
-                            ? currentServices.filter(name => name !== s.name)
-                            : [...currentServices, s.name];
-                          setEditingCustomer({...editingCustomer, services: next});
-                        }}
-                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                          isSelected 
-                            ? 'bg-rose-600 text-white border-rose-600' 
-                            : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
-                        }`}
-                      >
-                        {s.name}
-                      </button>
+                      <div key={category} className="border border-gray-100 dark:border-[#4a2b2d] rounded-md overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(category)}
+                          className="w-full flex items-center justify-between p-2 bg-gray-50 dark:bg-[#281718] hover:bg-gray-100 dark:hover:bg-[#3a2224] transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
+                            <h5 className="font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">{category}</h5>
+                          </div>
+                          {selectedCount > 0 && (
+                            <span className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 px-2 py-0.5 rounded-full font-medium">
+                              {selectedCount} đã chọn
+                            </span>
+                          )}
+                        </button>
+                        {isExpanded && (
+                          <div className="p-2 bg-white dark:bg-[#181a1b] flex flex-wrap gap-2">
+                            {items.map(item => {
+                              const isSelected = editingCustomer.services?.includes(item.original);
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const currentServices = editingCustomer.services || [];
+                                    const next = isSelected 
+                                      ? currentServices.filter(name => name !== item.original)
+                                      : [...currentServices, item.original];
+                                    setEditingCustomer({...editingCustomer, services: next});
+                                  }}
+                                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                    isSelected 
+                                      ? 'bg-rose-600 text-white border-rose-600' 
+                                      : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
+                                  }`}
+                                >
+                                  {item.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                   {services.length === 0 && <p className="text-xs text-gray-400 italic">Chưa có danh mục dịch vụ</p>}

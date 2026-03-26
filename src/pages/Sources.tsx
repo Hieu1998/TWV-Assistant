@@ -6,6 +6,7 @@ import { Label } from '@/src/components/ui/label';
 import { Plus, Search, Edit2, Trash2, Share2 } from 'lucide-react';
 import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { CustomerSource } from '@/src/types';
+import { generateUUID } from '@/src/lib/utils';
 
 export default function Sources() {
   const { sources, upsertSource, deleteSource } = useSupabase();
@@ -15,6 +16,7 @@ export default function Sources() {
   const [editingSource, setEditingSource] = useState<CustomerSource | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sourceName, setSourceName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenModal = (source?: CustomerSource) => {
     if (source) {
@@ -29,15 +31,20 @@ export default function Sources() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sourceName.trim()) return;
+    if (!sourceName.trim() || isSaving) return;
 
-    const sourceData: CustomerSource = {
-      id: editingSource ? editingSource.id : crypto.randomUUID(),
-      name: sourceName.trim(),
-    };
+    setIsSaving(true);
+    try {
+      const sourceData: CustomerSource = {
+        id: editingSource ? editingSource.id : generateUUID(),
+        name: sourceName.trim(),
+      };
 
-    await upsertSource(sourceData);
-    setIsModalOpen(false);
+      await upsertSource(sourceData);
+      setIsModalOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -46,10 +53,15 @@ export default function Sources() {
   };
 
   const confirmDelete = async () => {
-    if (sourceToDelete) {
-      await deleteSource(sourceToDelete);
-      setSourceToDelete(null);
-      setIsDeleteModalOpen(false);
+    if (sourceToDelete && !isSaving) {
+      setIsSaving(true);
+      try {
+        await deleteSource(sourceToDelete);
+        setSourceToDelete(null);
+        setIsDeleteModalOpen(false);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -128,8 +140,8 @@ export default function Sources() {
                 </div>
               </CardContent>
               <div className="p-6 pt-0 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Hủy</Button>
-                <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white">Lưu</Button>
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Hủy</Button>
+                <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white" loading={isSaving}>Lưu</Button>
               </div>
             </form>
           </Card>
@@ -144,8 +156,8 @@ export default function Sources() {
               <CardDescription>Bạn có chắc chắn muốn xóa nguồn khách hàng này? Hành động này không thể hoàn tác.</CardDescription>
             </CardHeader>
             <div className="p-6 pt-0 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Hủy</Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Xác nhận xóa</Button>
+              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isSaving}>Hủy</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete} loading={isSaving}>Xác nhận xóa</Button>
             </div>
           </Card>
         </div>

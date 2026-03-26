@@ -16,7 +16,7 @@ export default function Consultation() {
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    if (!customerMessage) return;
+    if (!customerMessage || isLoading) return;
     
     setIsLoading(true);
     setGeneratedResponse('');

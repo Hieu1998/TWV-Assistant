@@ -241,52 +241,55 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     if (!supabase) return;
     setLoading(true);
     try {
-      const promises = [];
-
       if (data.services && data.services.length > 0) {
-        promises.push(supabase.from('services').upsert(data.services.map(s => ({ id: s.id, name: s.name }))));
+        const { error } = await supabase.from('services').upsert(data.services.map(s => ({ id: s.id, name: s.name })));
+        if (error) throw error;
       }
 
       if (data.sources && data.sources.length > 0) {
-        promises.push(supabase.from('customer_sources').upsert(data.sources.map(s => ({ id: s.id, name: s.name }))));
+        const { error } = await supabase.from('customer_sources').upsert(data.sources.map(s => ({ id: s.id, name: s.name })));
+        if (error) throw error;
       }
 
       if (data.customers && data.customers.length > 0) {
-        promises.push(supabase.from('customers').upsert(data.customers.map(c => ({
-          id: c.id,
-          name: c.name,
-          phone: c.phone,
-          services: c.services,
-          status: c.status,
-          notes: c.notes,
-          source: c.source,
-          total_cost: c.totalCost,
-          start_date: c.startDate,
-          discharge_date: c.dischargeDate,
-          appointments_dates: c.appointments,
-          created_at: c.createdAt
-        }))));
+        const { error } = await supabase.from('customers').upsert(data.customers.map(c => {
+          const payload: any = {
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            services: c.services,
+            status: c.status,
+            notes: c.notes,
+            source: c.source,
+            total_cost: c.totalCost,
+            start_date: c.startDate,
+            discharge_date: c.dischargeDate,
+            appointments_dates: c.appointments
+          };
+          if (c.createdAt) payload.created_at = c.createdAt;
+          return payload;
+        }));
+        if (error) throw error;
       }
 
       if (data.appointments && data.appointments.length > 0) {
-        promises.push(supabase.from('appointments').upsert(data.appointments.map(a => ({
-          id: a.id,
-          customer_id: a.customerId,
-          customer_name: a.customerName,
-          date: a.date,
-          time: a.time,
-          type: a.type,
-          status: a.status,
-          notes: a.notes,
-          service_name: a.serviceName,
-          created_at: (a as any).createdAt
-        }))));
+        const { error } = await supabase.from('appointments').upsert(data.appointments.map(a => {
+          const payload: any = {
+            id: a.id,
+            customer_id: a.customerId,
+            customer_name: a.customerName,
+            date: a.date,
+            time: a.time,
+            type: a.type,
+            status: a.status,
+            notes: a.notes,
+            service_name: a.serviceName
+          };
+          if ((a as any).createdAt) payload.created_at = (a as any).createdAt;
+          return payload;
+        }));
+        if (error) throw error;
       }
-
-      const results = await Promise.all(promises);
-      results.forEach((res, idx) => {
-        if (res.error) console.error(`Error in bulk import step ${idx}:`, res.error);
-      });
 
       await refreshData();
     } catch (error) {
@@ -301,11 +304,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     if (!supabase) return;
     setLoading(true);
     try {
-      // Delete in order to respect foreign keys if any (though we have cascade)
-      await supabase.from('appointments').delete().neq('id', '0');
-      await supabase.from('customers').delete().neq('id', '0');
-      await supabase.from('services').delete().neq('id', '0');
-      await supabase.from('customer_sources').delete().neq('id', '0');
+      const res1 = await supabase.from('appointments').delete().neq('id', '0');
+      if (res1.error) throw res1.error;
+      const res2 = await supabase.from('customers').delete().neq('id', '0');
+      if (res2.error) throw res2.error;
+      const res3 = await supabase.from('services').delete().neq('id', '0');
+      if (res3.error) throw res3.error;
+      const res4 = await supabase.from('customer_sources').delete().neq('id', '0');
+      if (res4.error) throw res4.error;
+      
       await refreshData();
     } catch (error) {
       console.error('Error clearing data:', error);

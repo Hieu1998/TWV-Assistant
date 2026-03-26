@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, RefreshCw, Database, LogOut } from 'lucide-react';
+import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, RefreshCw, Database, LogOut, ListPlus } from 'lucide-react';
 import { useSupabase } from '@/src/contexts/SupabaseContext';
 import { Customer, Appointment } from '@/src/types';
 import { getSupabaseConfig, setSupabaseConfig, refreshSupabaseClient } from '@/src/lib/supabase';
+import { DEFAULT_SERVICES } from '@/src/lib/defaultData';
+import { generateUUID } from '@/src/lib/utils';
+import { ConfirmModal } from '@/src/components/ConfirmModal';
 
 export default function Settings() {
   const { 
@@ -25,6 +28,21 @@ export default function Settings() {
   const [url, setUrl] = useState(config.url || '');
   const [key, setKey] = useState(config.key || '');
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const closeConfirmModal = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
+
   const handleUpdateConfig = () => {
     if (!url || !key) return;
     setSupabaseConfig(url, key);
@@ -33,11 +51,18 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đăng xuất khỏi Supabase? Cấu hình URL và Key sẽ bị xóa khỏi trình duyệt.')) {
-      localStorage.removeItem('supabase_url');
-      localStorage.removeItem('supabase_key');
-      setConfigured(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Đăng xuất',
+      message: 'Bạn có chắc chắn muốn đăng xuất khỏi Supabase? Cấu hình URL và Key sẽ bị xóa khỏi trình duyệt.',
+      isDestructive: true,
+      onConfirm: () => {
+        localStorage.removeItem('supabase_url');
+        localStorage.removeItem('supabase_key');
+        setConfigured(false);
+        closeConfirmModal();
+      }
+    });
   };
 
   const handleExport = () => {
@@ -61,8 +86,9 @@ export default function Settings() {
   };
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const inputElement = event.target;
+    const file = inputElement.files?.[0];
+    if (!file || isProcessing) return;
 
     setIsProcessing(true);
     const reader = new FileReader();
@@ -86,25 +112,79 @@ export default function Settings() {
       } finally {
         setIsProcessing(false);
         // Reset input
-        event.target.value = '';
+        if (inputElement) inputElement.value = '';
       }
     };
     reader.readAsText(file);
   };
 
-  const handleClearData = async () => {
-    if (window.confirm('BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU TRÊN SUPABASE? Hành động này không thể hoàn tác.')) {
-      setIsProcessing(true);
-      try {
-        await clearAllData();
-        setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
-      } catch (error) {
-        setImportStatus({ type: 'error', message: 'Lỗi khi xoá dữ liệu.' });
-      } finally {
-        setIsProcessing(false);
+  const handleLoadDefaultServices = async () => {
+    if (isProcessing) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Tải dịch vụ mẫu',
+      message: 'Bạn có muốn tải danh mục dịch vụ mẫu vào hệ thống? Các dịch vụ hiện tại sẽ không bị ảnh hưởng.',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setIsProcessing(true);
+        try {
+          // Fetch latest services directly from DB to ensure we have the most up-to-date state
+          // in case the user deleted data directly in the database without refreshing the page.
+          const { supabase } = await import('@/src/lib/supabase');
+          let currentServices = services;
+          if (supabase) {
+            const { data } = await supabase.from('services').select('name');
+            if (data) {
+              currentServices = data as any;
+            }
+          }
+          
+          const existingNames = new Set(currentServices.map(s => s.name));
+          const servicesToImport = DEFAULT_SERVICES
+            .filter(name => !existingNames.has(name))
+            .map(name => ({
+              id: generateUUID(),
+              name
+            }));
+          
+          if (servicesToImport.length > 0) {
+            await bulkImport({ services: servicesToImport });
+            setImportStatus({ type: 'success', message: `Đã tải ${servicesToImport.length} dịch vụ mẫu thành công!` });
+          } else {
+            setImportStatus({ type: 'success', message: 'Tất cả dịch vụ mẫu đã có sẵn trong hệ thống.' });
+          }
+        } catch (error) {
+          console.error('Error loading default services:', error);
+          setImportStatus({ type: 'error', message: 'Lỗi khi tải dịch vụ mẫu.' });
+        } finally {
+          setIsProcessing(false);
+        }
+        setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
       }
-      setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
-    }
+    });
+  };
+
+  const handleClearData = async () => {
+    if (isProcessing) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Xóa toàn bộ dữ liệu',
+      message: 'BẠN CÓ CHẮC CHẮN MUỐN XOÁ TẤT CẢ DỮ LIỆU TRÊN SUPABASE? Hành động này không thể hoàn tác.',
+      isDestructive: true,
+      onConfirm: async () => {
+        closeConfirmModal();
+        setIsProcessing(true);
+        try {
+          await clearAllData();
+          setImportStatus({ type: 'success', message: 'Tất cả dữ liệu đã được xoá trên Supabase.' });
+        } catch (error) {
+          setImportStatus({ type: 'error', message: 'Lỗi khi xoá dữ liệu.' });
+        } finally {
+          setIsProcessing(false);
+        }
+        setTimeout(() => setImportStatus({ type: 'none', message: '' }), 3000);
+      }
+    });
   };
 
   return (
@@ -151,6 +231,24 @@ export default function Settings() {
                 <LogOut className="w-4 h-4 mr-2" /> Đăng xuất Supabase
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-rose-100 dark:border-[#4a2b2d] bg-white dark:bg-[#181a1b]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
+              <ListPlus className="w-5 h-5" />
+              Dữ liệu mẫu
+            </CardTitle>
+            <CardDescription>Tải danh mục dịch vụ mẫu đã được phân loại sẵn.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-rose-300 mb-6">
+              Hệ thống sẽ thêm danh sách các dịch vụ phẫu thuật thẩm mỹ phổ biến (Ngực, Mũi, Mắt...) vào danh mục của bạn.
+            </p>
+            <Button onClick={handleLoadDefaultServices} className="w-full bg-rose-600 hover:bg-rose-700 text-white" loading={isProcessing}>
+              <ListPlus className="w-4 h-4 mr-2" /> Tải dịch vụ mẫu
+            </Button>
           </CardContent>
         </Card>
 
@@ -233,6 +331,15 @@ export default function Settings() {
           </p>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={closeConfirmModal}
+        isDestructive={confirmModal.isDestructive}
+      />
     </div>
   );
 }

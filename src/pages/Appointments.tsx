@@ -7,6 +7,7 @@ import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Calendar as CalendarIcon, Clock, User, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { generateUUID } from '@/src/lib/utils';
 
 export default function Appointments() {
   const { appointments, customers, services, upsertAppointment } = useSupabase();
@@ -15,7 +16,23 @@ export default function Appointments() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [newAppt, setNewAppt] = useState({ customerId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '09:00', type: 'Tái khám' as const, notes: '', serviceName: '' });
+
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, { id: string, name: string, original: string }[]> = {};
+    services.forEach(s => {
+      const match = s.name.match(/^\[(.*?)\]\s*(.*)$/);
+      const category = match ? match[1] : 'Khác';
+      const name = match ? match[2] : s.name;
+      
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push({ id: s.id, name, original: s.name });
+    });
+    return groups;
+  }, [services]);
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -53,21 +70,26 @@ export default function Appointments() {
   };
 
   const handleAddAppt = async () => {
-    if (!newAppt.customerId || !newAppt.date) return;
+    if (!newAppt.customerId || !newAppt.date || isSaving) return;
     
-    const customer = customers.find(c => c.id === newAppt.customerId);
-    if (!customer) return;
+    setIsSaving(true);
+    try {
+      const customer = customers.find(c => c.id === newAppt.customerId);
+      if (!customer) return;
 
-    const appt: Appointment = {
-      id: crypto.randomUUID(),
-      customerId: customer.id,
-      customerName: customer.name,
-      status: 'Chờ khám',
-      ...newAppt
-    };
-    await upsertAppointment(appt);
-    setShowAddModal(false);
-    setNewAppt({ customerId: '', date: selectedDate, time: '09:00', type: 'Tái khám', notes: '', serviceName: '' });
+      const appt: Appointment = {
+        id: generateUUID(),
+        customerId: customer.id,
+        customerName: customer.name,
+        status: 'Chờ khám',
+        ...newAppt
+      };
+      await upsertAppointment(appt);
+      setShowAddModal(false);
+      setNewAppt({ customerId: '', date: selectedDate, time: '09:00', type: 'Tái khám', notes: '', serviceName: '' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleStatusChange = async (id: string, status: Appointment['status']) => {
@@ -177,7 +199,14 @@ export default function Appointments() {
                               {customer && <span className="ml-2 text-sm text-gray-400 dark:text-rose-300/70">({customer.phone})</span>}
                             </div>
                             {customer && customer.services && customer.services.length > 0 && (
-                              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 italic">Dịch vụ KH: {customer.services.join(', ')}</div>
+                              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 italic">
+                                <span className="font-semibold">Dịch vụ KH:</span>
+                                <ul className="list-disc pl-4 mt-0.5 space-y-0.5">
+                                  {customer.services.map((srv, idx) => (
+                                    <li key={idx}>{srv.replace(/^\[.*?\]\s*/, '')}</li>
+                                  ))}
+                                </ul>
+                              </div>
                             )}
                             {appt.serviceName && (
                               <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-bold">Dịch vụ hẹn: {appt.serviceName}</div>
@@ -261,7 +290,16 @@ export default function Appointments() {
                           {customer && (
                             <div className="text-[10px] mt-0.5 space-y-0.5 opacity-80">
                               <div className="flex items-center"><Phone className="w-2 h-2 mr-1"/>{customer.phone}</div>
-                              {customer.services && customer.services.length > 0 && <div className="truncate">DV KH: {customer.services.join(', ')}</div>}
+                              {customer.services && customer.services.length > 0 && (
+                                <div>
+                                  <span className="font-semibold">DV KH:</span>
+                                  <div className="pl-1 space-y-0.5">
+                                    {customer.services.map((srv, idx) => (
+                                      <div key={idx} className="truncate">- {srv.replace(/^\[.*?\]\s*/, '')}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               {appt.serviceName && <div className="truncate font-bold">DV Hẹn: {appt.serviceName}</div>}
                               {customer.startDate && <div>BĐ: {format(new Date(customer.startDate), 'dd/MM')}</div>}
                               {customer.appointments && customer.appointments[0] && <div>Hẹn 1: {format(new Date(customer.appointments[0]), 'dd/MM')}</div>}
@@ -298,6 +336,21 @@ export default function Appointments() {
                   ))}
                 </select>
               </div>
+
+              {newAppt.customerId && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-900/30">
+                  <Label className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase">Dịch vụ của khách hàng:</Label>
+                  <ul className="mt-2 space-y-1">
+                    {customers.find(c => c.id === newAppt.customerId)?.services?.map((s, i) => (
+                      <li key={i} className="text-sm text-gray-700 dark:text-rose-200 flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                        {s.replace(/^\[.*?\]\s*/, '')}
+                      </li>
+                    )) || <li className="text-sm text-gray-400 italic">Chưa có dịch vụ</li>}
+                  </ul>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Ngày <span className="text-rose-600">*</span></Label>
@@ -321,32 +374,18 @@ export default function Appointments() {
                   <option value="Cắt chỉ">Cắt chỉ</option>
                 </select>
               </div>
-              {services.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Dịch vụ cụ thể cho buổi hẹn</Label>
-                  <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
-                    value={newAppt.serviceName}
-                    onChange={e => setNewAppt({...newAppt, serviceName: e.target.value})}
-                  >
-                    <option value="">-- Chọn dịch vụ --</option>
-                    {services.map(s => (
-                      <option key={s.id} value={s.name}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Input value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} placeholder="VD: Nhắc khách nhịn ăn sáng..." />
               </div>
             </CardContent>
             <div className="p-6 pt-0 flex justify-end space-x-2 shrink-0">
-              <Button variant="outline" onClick={() => setShowAddModal(false)}>Hủy</Button>
+              <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isSaving}>Hủy</Button>
               <Button 
                 onClick={handleAddAppt} 
                 className="bg-rose-600 hover:bg-rose-700 text-white" 
                 disabled={!newAppt.customerId || !newAppt.date || !newAppt.time}
+                loading={isSaving}
               >
                 Lưu lịch hẹn
               </Button>

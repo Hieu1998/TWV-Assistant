@@ -148,7 +148,7 @@ export default function Reports() {
         dayStr,
         c.name,
         c.phone,
-        (c.services || []).join(', '),
+        (c.services || []).map(s => s.replace(/^\[.*?\]\s*/, '')).join('\n'),
         formatCurrency(cost),
         heThong ? formatCurrency(heThong) : '',
         khGioiThieu ? formatCurrency(khGioiThieu) : '',
@@ -168,8 +168,10 @@ export default function Reports() {
         cell.alignment = { vertical: 'middle' };
       });
       // Center some columns
-      row.getCell(1).alignment = { horizontal: 'center' };
-      row.getCell(3).alignment = { horizontal: 'center' };
+      row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+      // Wrap text for services column
+      row.getCell(4).alignment = { vertical: 'middle', wrapText: true };
     });
 
     // 4. Footer Row
@@ -206,7 +208,7 @@ export default function Reports() {
     const rows = data.map(c => [
       c.name,
       c.phone,
-      (c.services || []).join(', '),
+      (c.services || []).map(s => s.replace(/^\[.*?\]\s*/, '')).join(', '),
       c.source || '',
       c.totalCost || '0'
     ]);
@@ -373,7 +375,7 @@ export default function Reports() {
                                 {c.services && c.services.length > 0 ? (
                                   c.services.map((s, i) => (
                                     <span key={i} className="px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs">
-                                      {s}
+                                      {s.replace(/^\[.*?\]\s*/, '')}
                                     </span>
                                   ))
                                 ) : (
