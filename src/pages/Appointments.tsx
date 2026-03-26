@@ -121,7 +121,7 @@ export default function Appointments() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Lịch hẹn & Tái khám 🗓️</h1>
           <p className="text-gray-500 dark:text-rose-200 mt-2">Quản lý lịch khách đến làm dịch vụ và tái khám mỗi ngày.</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="bg-rose-600 hover:bg-rose-700 text-white">
+        <Button onClick={() => setShowAddModal(true)} className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white">
           <Plus className="w-4 h-4 mr-2" /> Thêm lịch hẹn
         </Button>
       </div>
@@ -203,7 +203,7 @@ export default function Appointments() {
                                 <span className="font-semibold">Dịch vụ KH:</span>
                                 <ul className="list-disc pl-4 mt-0.5 space-y-0.5">
                                   {customer.services.map((srv, idx) => (
-                                    <li key={idx}>{srv.replace(/^\[.*?\]\s*/, '')}</li>
+                                    <li key={idx} className="break-words">{srv.replace(/^\[.*?\]\s*/, '')}</li>
                                   ))}
                                 </ul>
                               </div>
@@ -295,7 +295,7 @@ export default function Appointments() {
                                   <span className="font-semibold">DV KH:</span>
                                   <div className="pl-1 space-y-0.5">
                                     {customer.services.map((srv, idx) => (
-                                      <div key={idx} className="truncate">- {srv.replace(/^\[.*?\]\s*/, '')}</div>
+                                      <div key={idx} className="truncate break-words">- {srv.replace(/^\[.*?\]\s*/, '')}</div>
                                     ))}
                                   </div>
                                 </div>
@@ -342,7 +342,7 @@ export default function Appointments() {
                   <Label className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase">Dịch vụ của khách hàng:</Label>
                   <ul className="mt-2 space-y-1">
                     {customers.find(c => c.id === newAppt.customerId)?.services?.map((s, i) => (
-                      <li key={i} className="text-sm text-gray-700 dark:text-rose-200 flex items-start gap-2">
+                      <li key={i} className="text-sm text-gray-700 dark:text-rose-200 flex items-start gap-2 break-words">
                         <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                         {s.replace(/^\[.*?\]\s*/, '')}
                       </li>

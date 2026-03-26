@@ -286,10 +286,10 @@ export default function Customers() {
                         Nguồn: {customer.source}
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-col gap-1 mt-2 items-start">
                       {customer.services && customer.services.length > 0 ? (
                         customer.services.map((s, i) => (
-                          <span key={i} className="text-[10px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/20 px-2 py-0.5 rounded">
+                          <span key={i} className="text-[10px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-500/20 px-2 py-0.5 rounded break-words max-w-full">
                             {s.replace(/^\[.*?\]\s*/, '')}
                           </span>
                         ))
@@ -384,7 +384,7 @@ export default function Customers() {
                           )}
                         </button>
                         {isExpanded && (
-                          <div className="p-2 bg-white dark:bg-[#181a1b] flex flex-wrap gap-2">
+                                  <div className="p-2 bg-white dark:bg-[#181a1b] flex flex-wrap gap-2">
                             {items.map(item => {
                               const isSelected = newCustomer.services.includes(item.original);
                               return (
@@ -397,7 +397,7 @@ export default function Customers() {
                                       : [...newCustomer.services, item.original];
                                     setNewCustomer({...newCustomer, services: next});
                                   }}
-                                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                  className={`text-xs px-2 py-1 rounded-full border transition-colors break-words text-left max-w-full ${
                                     isSelected 
                                       ? 'bg-rose-600 text-white border-rose-600' 
                                       : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'
@@ -517,7 +517,7 @@ export default function Customers() {
                                       : [...currentServices, item.original];
                                     setEditingCustomer({...editingCustomer, services: next});
                                   }}
-                                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                                  className={`text-xs px-2 py-1 rounded-full border transition-colors break-words text-left max-w-full ${
                                     isSelected 
                                       ? 'bg-rose-600 text-white border-rose-600' 
                                       : 'bg-white dark:bg-[#281718] text-gray-600 dark:text-rose-200 border-gray-200 dark:border-[#4a2b2d] hover:border-rose-300'

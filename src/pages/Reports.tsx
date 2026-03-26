@@ -353,7 +353,7 @@ export default function Reports() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-[50vh] lg:max-h-[60vh] overflow-y-auto">
+                  <div className="max-h-[50vh] lg:max-h-[60vh] overflow-y-auto overflow-x-auto">
                     <Table>
                       <TableHeader className="sticky top-0 bg-white dark:bg-[#181a1b] z-10">
                         <TableRow className="hover:bg-transparent border-rose-100 dark:border-[#4a2b2d]">
@@ -374,7 +374,7 @@ export default function Reports() {
                               <div className="flex flex-wrap gap-1">
                                 {c.services && c.services.length > 0 ? (
                                   c.services.map((s, i) => (
-                                    <span key={i} className="px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs">
+                                    <span key={i} className="px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs break-words max-w-[120px] lg:max-w-none">
                                       {s.replace(/^\[.*?\]\s*/, '')}
                                     </span>
                                   ))
