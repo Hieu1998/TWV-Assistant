@@ -364,51 +364,49 @@ export default function Reports() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-[50vh] lg:max-h-[60vh] overflow-y-auto overflow-x-auto">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-white dark:bg-[#181a1b] z-10">
-                        <TableRow className="hover:bg-transparent border-rose-100 dark:border-[#4a2b2d]">
-                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Khách hàng</TableHead>
-                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Dịch vụ</TableHead>
-                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm">Nguồn</TableHead>
-                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-right text-xs lg:text-sm">Chi phí</TableHead>
-                          <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-right text-xs lg:text-sm">Hoa hồng</TableHead>
+                  <Table wrapperClassName="max-h-[50vh] lg:max-h-[60vh]">
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent border-rose-100 dark:border-[#4a2b2d]">
+                        <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm whitespace-nowrap sticky top-0 left-0 z-40 bg-white dark:bg-[#181a1b] border-r border-b border-rose-100 dark:border-[#4a2b2d] shadow-sm">Khách hàng</TableHead>
+                        <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm min-w-[200px] sticky top-0 z-30 bg-white dark:bg-[#181a1b] border-b border-rose-100 dark:border-[#4a2b2d] shadow-sm">Dịch vụ</TableHead>
+                        <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-xs lg:text-sm whitespace-nowrap sticky top-0 z-30 bg-white dark:bg-[#181a1b] border-b border-rose-100 dark:border-[#4a2b2d] shadow-sm">Nguồn</TableHead>
+                        <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-right text-xs lg:text-sm whitespace-nowrap sticky top-0 z-30 bg-white dark:bg-[#181a1b] border-b border-rose-100 dark:border-[#4a2b2d] shadow-sm">Chi phí</TableHead>
+                        <TableHead className="text-rose-900 dark:text-rose-200 font-bold text-right text-xs lg:text-sm whitespace-nowrap sticky top-0 z-30 bg-white dark:bg-[#181a1b] border-b border-rose-100 dark:border-[#4a2b2d] shadow-sm">Hoa hồng</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedMonthData[1].customers.map((c) => (
+                        <TableRow key={c.id} className="group border-rose-50 dark:border-[#281718] hover:bg-rose-50/30 dark:hover:bg-[#3a2224]">
+                          <TableCell className="py-2 lg:py-4 whitespace-nowrap sticky left-0 z-20 bg-white dark:bg-[#181a1b] group-hover:bg-rose-50/30 dark:group-hover:bg-[#3a2224] border-r border-rose-50 dark:border-[#281718]">
+                            <div className="font-medium dark:text-white text-xs lg:text-sm">{c.name}</div>
+                            <div className="text-[10px] lg:text-xs text-gray-500 dark:text-rose-300/70">{c.phone}</div>
+                          </TableCell>
+                          <TableCell className="py-2 lg:py-4 min-w-[200px]">
+                            <div className="flex flex-wrap gap-1">
+                              {c.services && c.services.length > 0 ? (
+                                c.services.map((s, i) => (
+                                  <span key={i} className="px-2 py-1 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[11px] lg:text-xs">
+                                    {s.replace(/^\[.*?\]\s*/, '')}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] lg:text-xs text-gray-400">N/A</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2 lg:py-4 whitespace-nowrap">
+                            <span className="text-xs text-gray-600 dark:text-rose-200">{c.source || 'N/A'}</span>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-rose-600 dark:text-rose-400 py-2 lg:py-4 text-xs lg:text-sm whitespace-nowrap">
+                            {formatCurrency(c.totalCost || 0)}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-green-600 dark:text-green-400 py-2 lg:py-4 text-xs lg:text-sm whitespace-nowrap">
+                            {formatCurrency(((parseInt(c.totalCost?.replace(/\D/g, '') || '0', 10) * (parseFloat(c.commissionRate || '0') || 0)) / 100).toString())}
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedMonthData[1].customers.map((c) => (
-                          <TableRow key={c.id} className="border-rose-50 dark:border-[#281718] hover:bg-rose-50/30 dark:hover:bg-[#3a2224]">
-                            <TableCell className="py-2 lg:py-4">
-                              <div className="font-medium dark:text-white text-xs lg:text-sm">{c.name}</div>
-                              <div className="text-[10px] lg:text-xs text-gray-500 dark:text-rose-300/70">{c.phone}</div>
-                            </TableCell>
-                            <TableCell className="py-2 lg:py-4">
-                              <div className="flex flex-wrap gap-1">
-                                {c.services && c.services.length > 0 ? (
-                                  c.services.map((s, i) => (
-                                    <span key={i} className="px-1.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[10px] lg:text-xs break-words max-w-[120px] lg:max-w-none">
-                                      {s.replace(/^\[.*?\]\s*/, '')}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-[10px] lg:text-xs text-gray-400">N/A</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-2 lg:py-4">
-                              <span className="text-xs text-gray-600 dark:text-rose-200">{c.source || 'N/A'}</span>
-                            </TableCell>
-                            <TableCell className="text-right font-semibold text-rose-600 dark:text-rose-400 py-2 lg:py-4 text-xs lg:text-sm">
-                              {formatCurrency(c.totalCost || 0)}
-                            </TableCell>
-                            <TableCell className="text-right font-semibold text-green-600 dark:text-green-400 py-2 lg:py-4 text-xs lg:text-sm">
-                              {formatCurrency(((parseInt(c.totalCost?.replace(/\D/g, '') || '0', 10) * (parseFloat(c.commissionRate || '0') || 0)) / 100).toString())}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                      ))}
+                    </TableBody>
+                  </Table>
                   <div className="p-4 bg-rose-50/30 dark:bg-[#181a1b] border-t border-rose-100 dark:border-[#4a2b2d] flex flex-col gap-2 font-bold">
                     <div className="flex justify-between items-center">
                       <span className="text-rose-900 dark:text-rose-100 text-sm lg:text-base">Tổng doanh thu:</span>

@@ -217,7 +217,7 @@ export default function Customers() {
     const cost = parseInt(costStr.replace(/\D/g, ''), 10) || 0;
     const rate = parseFloat(rateStr) || 0;
     const commission = (cost * rate) / 100;
-    return formatCurrency(commission.toString()) + ' VNĐ';
+    return formatCurrency(commission.toString());
   };
 
   const filteredCustomers = useMemo(() => {
