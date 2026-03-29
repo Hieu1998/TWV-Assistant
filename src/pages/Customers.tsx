@@ -243,7 +243,7 @@ export default function Customers() {
   }, [filteredCustomers]);
 
   const allStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu', 'Bảo hành'];
-  const creationStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu', 'Bảo hành'];
+  const creationStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Bảo hành'];
 
   return (
     <div className="space-y-6">
@@ -368,9 +368,16 @@ export default function Customers() {
                           </div>
                         )}
                         {customer.totalCost && (
-                          <div className="text-[11px] text-green-600 dark:text-green-400 flex items-center font-black bg-green-50 dark:bg-green-900/20 p-1.5 rounded-lg border border-green-100 dark:border-green-900/30">
-                            <DollarSign className="w-3.5 h-3.5 mr-1" /> {customer.totalCost}
-                          </div>
+                          <>
+                            <div className="text-[11px] text-green-600 dark:text-green-400 flex items-center font-black bg-green-50 dark:bg-green-900/20 p-1.5 rounded-lg border border-green-100 dark:border-green-900/30">
+                              <DollarSign className="w-3.5 h-3.5 mr-1" /> {customer.totalCost}
+                            </div>
+                            {customer.commissionRate && (
+                              <div className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center font-black bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                <DollarSign className="w-3.5 h-3.5 mr-1" /> HH: {calculateCommission(customer.totalCost, customer.commissionRate)} ({customer.commissionRate}%)
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     )}

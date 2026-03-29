@@ -60,7 +60,7 @@ export default function Reports() {
     };
   }, [monthlyReports]);
 
-  const exportToExcel = async (month: string, data: Customer[], total: number, commission: number) => {
+  const exportToExcel = async (month: string, data: Customer[], total: number) => {
     const [m, y] = month.split('/');
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`Tháng ${m}`);
@@ -78,22 +78,21 @@ export default function Reports() {
       { width: 10 }, // Hẹn
       { width: 10 }, // Chốt
       { width: 10 }, // Chăm sóc
-      { width: 15 }, // Hoa hồng
     ];
 
     // 1. Title Row
     const titleRow = worksheet.addRow([`DOANH THU THẨM MỸ THÁNG ${m}`]);
-    worksheet.mergeCells(1, 1, 1, 12);
+    worksheet.mergeCells(1, 1, 1, 11);
     titleRow.getCell(1).font = { bold: true, size: 16 };
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
     titleRow.height = 30;
 
     // 2. Header Rows
     const headerRow1 = worksheet.addRow([
-      'NGÀY', 'KHÁCH HÀNG', 'SĐT', 'DỊCH VỤ', 'CHỐT', 'DOANH THU - NGUỒN', '', '', 'PHÂN BỔ', '', '', 'HOA HỒNG'
+      'NGÀY', 'KHÁCH HÀNG', 'SĐT', 'DỊCH VỤ', 'CHỐT', 'DOANH THU - NGUỒN', '', '', 'PHÂN BỔ', '', ''
     ]);
     const headerRow2 = worksheet.addRow([
-      '', '', '', '', '', 'Hệ thống', 'KH giới thiệu', 'CTV', 'Hẹn', 'Chốt', 'Chăm sóc', ''
+      '', '', '', '', '', 'Hệ thống', 'KH giới thiệu', 'CTV', 'Hẹn', 'Chốt', 'Chăm sóc'
     ]);
 
     // Merge headers
@@ -104,7 +103,6 @@ export default function Reports() {
     worksheet.mergeCells(2, 5, 3, 5); // CHỐT
     worksheet.mergeCells(2, 6, 2, 8); // DOANH THU - NGUỒN
     worksheet.mergeCells(2, 9, 2, 11); // PHÂN BỔ
-    worksheet.mergeCells(2, 12, 3, 12); // HOA HỒNG
 
     // Style headers
     [headerRow1, headerRow2].forEach(row => {
@@ -162,8 +160,7 @@ export default function Reports() {
         ctv ? formatCurrency(ctv) : '',
         '', // Hẹn
         '', // Chốt
-        '',  // Chăm sóc
-        formatCurrency(((cost * (parseFloat(c.commissionRate || '0') || 0)) / 100).toString())
+        ''  // Chăm sóc
       ]);
 
       row.eachCell(cell => {
@@ -184,7 +181,7 @@ export default function Reports() {
 
     // 4. Footer Row
     const footerRow = worksheet.addRow([
-      'TỔNG', '', '', '', formatCurrency(total), formatCurrency(totalHeThong), formatCurrency(totalKHGioiThieu), formatCurrency(totalCTV), '', '', '', formatCurrency(commission)
+      'TỔNG', '', '', '', formatCurrency(total), formatCurrency(totalHeThong), formatCurrency(totalKHGioiThieu), formatCurrency(totalCTV), '', '', ''
     ]);
     worksheet.mergeCells(footerRow.number, 1, footerRow.number, 4);
     
@@ -360,7 +357,7 @@ export default function Reports() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1 sm:flex-none border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30"
-                      onClick={() => exportToExcel(selectedMonth!, selectedMonthData[1].customers, selectedMonthData[1].total, selectedMonthData[1].commission)}
+                      onClick={() => exportToExcel(selectedMonth!, selectedMonthData[1].customers, selectedMonthData[1].total)}
                     >
                       <FileDown className="w-4 h-4 mr-1 lg:mr-2" /> Excel
                     </Button>
