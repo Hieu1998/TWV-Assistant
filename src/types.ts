@@ -13,6 +13,7 @@ export interface Customer {
   dischargeDate?: string;
   totalCost?: string;
   deposit?: string;
+  commissionRate?: string;
   source?: string;
 }
 

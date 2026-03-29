@@ -67,7 +67,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           startDate: c.start_date,
           dischargeDate: c.discharge_date,
           appointments: c.appointments_dates,
-          createdAt: c.created_at
+          createdAt: c.created_at,
+          deposit: c.deposit,
+          commissionRate: c.commission_rate
         })));
       }
       if (appointmentsData) {
@@ -113,7 +115,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       total_cost: customer.totalCost,
       start_date: customer.startDate,
       discharge_date: customer.dischargeDate,
-      appointments_dates: customer.appointments
+      appointments_dates: customer.appointments,
+      deposit: customer.deposit,
+      commission_rate: customer.commissionRate
     };
     if (customer.createdAt) {
       data.created_at = customer.createdAt;

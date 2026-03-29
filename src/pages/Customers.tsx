@@ -22,7 +22,7 @@ export default function Customers() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '', deposit: '' });
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '', deposit: '', commissionRate: '' });
   
   const [isSaving, setIsSaving] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -83,7 +83,7 @@ export default function Customers() {
       };
       await upsertCustomer(customer);
       setShowAddModal(false);
-      setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '', deposit: '' });
+      setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '', deposit: '', commissionRate: '' });
     } finally {
       setIsSaving(false);
     }
@@ -210,6 +210,14 @@ export default function Customers() {
 
     const formatted = newDigits ? formatCurrency(newDigits) : '';
     setEditingCustomer({...editingCustomer, deposit: formatted});
+  };
+
+  const calculateCommission = (costStr?: string, rateStr?: string) => {
+    if (!costStr || !rateStr) return '0 VNĐ';
+    const cost = parseInt(costStr.replace(/\D/g, ''), 10) || 0;
+    const rate = parseFloat(rateStr) || 0;
+    const commission = (cost * rate) / 100;
+    return formatCurrency(commission.toString()) + ' VNĐ';
   };
 
   const filteredCustomers = useMemo(() => {
@@ -708,10 +716,27 @@ export default function Customers() {
                   </div>
 
                   {(editingCustomer.status === 'Đang tư vấn' || editingCustomer.status === 'Đã chốt' || editingCustomer.status === 'Hậu phẫu' || editingCustomer.status === 'Bảo hành') && (
-                    <div className="space-y-2">
-                      <Label>Chi phí chốt dịch vụ</Label>
-                      <Input placeholder="VD: 15.000.000 VNĐ" value={editingCustomer.totalCost || ''} onChange={handleCostChange} />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <Label>Chi phí chốt dịch vụ</Label>
+                        <Input placeholder="VD: 15.000.000 VNĐ" value={editingCustomer.totalCost || ''} onChange={handleCostChange} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Hoa hồng ước tính (%)</Label>
+                        <div className="flex items-center gap-3">
+                          <Input 
+                            type="number" 
+                            placeholder="VD: 2" 
+                            value={editingCustomer.commissionRate || ''} 
+                            onChange={e => setEditingCustomer({...editingCustomer, commissionRate: e.target.value})} 
+                            className="w-24"
+                          />
+                          <span className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-md border border-green-100 dark:border-green-900/30">
+                            = {calculateCommission(editingCustomer.totalCost, editingCustomer.commissionRate)}
+                          </span>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
