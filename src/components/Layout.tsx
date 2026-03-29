@@ -192,7 +192,7 @@ export default function Layout() {
             </div>
           </div>
         )}
-        <div className="p-4 md:p-8 pb-24 md:pb-8 pb-safe max-w-6xl mx-auto dark:bg-[#281718] min-h-full">
+        <div className="p-4 md:p-8 pb-24 md:pb-8 pb-safe w-full dark:bg-[#281718] min-h-full">
           <Outlet />
         </div>
       </main>

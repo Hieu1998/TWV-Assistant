@@ -19,7 +19,7 @@ export default function Reports() {
     const reports: { [key: string]: { customers: Customer[], total: number } } = {};
     
     customers.forEach(customer => {
-      if (customer.status === 'Hậu phẫu') {
+      if (customer.status === 'Hậu phẫu' || customer.status === 'Bảo hành') {
         const date = customer.startDate ? parseISO(customer.startDate) : new Date(customer.createdAt);
         const monthKey = format(date, 'MM/yyyy');
         
@@ -231,7 +231,7 @@ export default function Reports() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Báo cáo Doanh thu & Hậu phẫu 📊</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Báo cáo Doanh thu & Hậu phẫu / Bảo hành 📊</h1>
           <p className="text-gray-500 dark:text-rose-200 mt-2">Tổng hợp danh sách khách đã phẫu thuật và doanh thu theo từng tháng.</p>
         </div>
       </div>

@@ -22,7 +22,7 @@ export default function Customers() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '' });
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', services: [] as string[], status: 'Tiềm năng' as const, notes: '', source: '', deposit: '' });
   
   const [isSaving, setIsSaving] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -57,7 +57,7 @@ export default function Customers() {
   const monthlyRevenue = useMemo(() => {
     const revenueByMonth: { [key: string]: number } = {};
     customers.forEach(c => {
-      if (c.status === 'Hậu phẫu' && c.totalCost) {
+      if ((c.status === 'Hậu phẫu' || c.status === 'Bảo hành') && c.totalCost) {
         const date = c.startDate ? new Date(c.startDate) : new Date(c.createdAt);
         const monthYear = format(date, 'MM/yyyy');
         const amount = parseInt(c.totalCost.replace(/\D/g, ''), 10) || 0;
@@ -83,7 +83,7 @@ export default function Customers() {
       };
       await upsertCustomer(customer);
       setShowAddModal(false);
-      setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '' });
+      setNewCustomer({ name: '', phone: '', services: [], status: 'Tiềm năng', notes: '', source: '', deposit: '' });
     } finally {
       setIsSaving(false);
     }
@@ -94,12 +94,18 @@ export default function Customers() {
     setIsSaving(true);
     try {
       const oldCustomer = customers.find(c => c.id === editingCustomer.id);
-      const statusChangedToHauPhau = oldCustomer?.status !== 'Hậu phẫu' && editingCustomer.status === 'Hậu phẫu';
+      const statusChangedToHauPhauOrBaoHanh = 
+        (oldCustomer?.status !== 'Hậu phẫu' && editingCustomer.status === 'Hậu phẫu') ||
+        (oldCustomer?.status !== 'Bảo hành' && editingCustomer.status === 'Bảo hành');
 
       await upsertCustomer(editingCustomer);
       setEditingCustomer(null);
 
-      if (statusChangedToHauPhau) {
+      if (statusChangedToHauPhauOrBaoHanh) {
+        const today = new Date();
+        setAutoScheduleDates({
+          day1: format(addDays(today, 1), 'yyyy-MM-dd')
+        });
         setConfirmScheduleModal({ isOpen: true, customer: editingCustomer });
       }
     } finally {
@@ -132,11 +138,14 @@ export default function Customers() {
     if (newStatus === 'Hậu phẫu' && customer.status !== 'Đã chốt') {
       return;
     }
+    if (newStatus === 'Bảo hành' && customer.status !== 'Hậu phẫu') {
+      return;
+    }
 
     const updatedCustomer = { ...customer, status: newStatus };
     await upsertCustomer(updatedCustomer);
 
-    if (newStatus === 'Hậu phẫu' && customer.status !== 'Hậu phẫu') {
+    if ((newStatus === 'Hậu phẫu' && customer.status !== 'Hậu phẫu') || (newStatus === 'Bảo hành' && customer.status !== 'Bảo hành')) {
       const today = new Date();
       setAutoScheduleDates({
         day1: format(addDays(today, 1), 'yyyy-MM-dd')
@@ -178,6 +187,31 @@ export default function Customers() {
     setEditingCustomer({...editingCustomer, totalCost: formatted});
   };
 
+  const handleNewDepositChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const oldDigits = (newCustomer.deposit || '').replace(/\D/g, '');
+    let newDigits = e.target.value.replace(/\D/g, '');
+    
+    if (e.target.value.length < (newCustomer.deposit || '').length && oldDigits === newDigits) {
+       newDigits = newDigits.slice(0, -1);
+    }
+
+    const formatted = newDigits ? formatCurrency(newDigits) : '';
+    setNewCustomer({...newCustomer, deposit: formatted});
+  };
+
+  const handleEditDepositChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editingCustomer) return;
+    const oldDigits = (editingCustomer.deposit || '').replace(/\D/g, '');
+    let newDigits = e.target.value.replace(/\D/g, '');
+    
+    if (e.target.value.length < (editingCustomer.deposit || '').length && oldDigits === newDigits) {
+       newDigits = newDigits.slice(0, -1);
+    }
+
+    const formatted = newDigits ? formatCurrency(newDigits) : '';
+    setEditingCustomer({...editingCustomer, deposit: formatted});
+  };
+
   const filteredCustomers = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
     return customers.filter(c => 
@@ -191,7 +225,8 @@ export default function Customers() {
       'Tiềm năng': [],
       'Đang tư vấn': [],
       'Đã chốt': [],
-      'Hậu phẫu': []
+      'Hậu phẫu': [],
+      'Bảo hành': []
     };
     filteredCustomers.forEach(c => {
       grouped[c.status].push(c);
@@ -199,8 +234,8 @@ export default function Customers() {
     return grouped;
   }, [filteredCustomers]);
 
-  const allStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu'];
-  const creationStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt'];
+  const allStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu', 'Bảo hành'];
+  const creationStatuses: Customer['status'][] = ['Tiềm năng', 'Đang tư vấn', 'Đã chốt', 'Hậu phẫu', 'Bảo hành'];
 
   return (
     <div className="space-y-6">
@@ -220,7 +255,7 @@ export default function Customers() {
         <Card className="bg-rose-50/30 dark:bg-[#181a1b] border-rose-100 dark:border-[#4a2b2d] shadow-sm overflow-hidden">
           <CardHeader className="pb-3 bg-rose-50/50 dark:bg-rose-900/10 border-b border-rose-100 dark:border-rose-900/20">
             <CardTitle className="text-sm font-bold flex items-center text-rose-800 dark:text-rose-300 uppercase tracking-widest">
-              <DollarSign className="w-4 h-4 mr-2" /> Doanh thu theo tháng (Hậu phẫu)
+              <DollarSign className="w-4 h-4 mr-2" /> Doanh thu theo tháng (Hậu phẫu, Bảo hành)
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -251,7 +286,7 @@ export default function Customers() {
         />
       </div>
 
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 xl:grid-cols-4 scrollbar-hide scroll-smooth overscroll-x-contain">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 xl:grid-cols-5 scrollbar-hide scroll-smooth overscroll-x-contain">
         {allStatuses.map(status => (
           <div key={status} className="bg-gray-50/50 dark:bg-[#181a1b] rounded-2xl p-4 border border-gray-100 dark:border-[#4a2b2d] min-w-[85vw] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 flex flex-col h-full scroll-mt-4">
             <h3 className="font-bold text-gray-800 dark:text-rose-100 mb-4 flex items-center justify-between px-1">
@@ -259,7 +294,8 @@ export default function Customers() {
                 <span className={`w-2 h-2 rounded-full ${
                   status === 'Tiềm năng' ? 'bg-blue-500' : 
                   status === 'Đang tư vấn' ? 'bg-orange-500' : 
-                  status === 'Đã chốt' ? 'bg-green-500' : 'bg-purple-500'
+                  status === 'Đã chốt' ? 'bg-green-500' : 
+                  status === 'Hậu phẫu' ? 'bg-purple-500' : 'bg-rose-500'
                 }`} />
                 {status}
               </span>
@@ -285,6 +321,18 @@ export default function Customers() {
                     <div className="text-sm text-gray-500 dark:text-rose-300/70 flex items-center mt-1.5 font-medium">
                       <Phone className="w-3.5 h-3.5 mr-1.5 text-rose-400" /> {customer.phone}
                     </div>
+                    {customer.deposit && (
+                      <div className="text-[11px] text-gray-600 dark:text-rose-300/70 mt-1.5 flex items-center gap-1 font-medium">
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-rose-300/30" />
+                        Đã cọc: <span className="font-bold text-green-600 dark:text-green-400">{customer.deposit}</span>
+                      </div>
+                    )}
+                    {customer.notes && (
+                      <div className="text-[11px] text-gray-600 dark:text-rose-300/70 mt-1.5 flex items-start gap-1 font-medium">
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-rose-300/30 mt-1.5" />
+                        <span className="flex-1 line-clamp-2">Ghi chú: {customer.notes}</span>
+                      </div>
+                    )}
                     {customer.source && (
                       <div className="text-[10px] text-gray-400 dark:text-rose-300/40 mt-1.5 flex items-center gap-1 uppercase tracking-wider font-bold">
                         <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-rose-300/30" />
@@ -320,7 +368,7 @@ export default function Customers() {
                     )}
                     
                     <div className="mt-4 pt-3 border-t border-gray-50 dark:border-[#4a2b2d] flex items-center justify-between" onClick={e => e.stopPropagation()}>
-                      {status !== 'Hậu phẫu' ? (
+                      {status !== 'Bảo hành' ? (
                         <div className="relative w-full">
                           <select 
                             className="w-full text-[11px] font-bold border border-gray-200 dark:border-[#4a2b2d] rounded-xl p-2 bg-gray-50 dark:bg-[#181a1b] outline-none text-gray-700 dark:text-rose-200 appearance-none cursor-pointer hover:bg-white dark:hover:bg-[#281718] transition-colors"
@@ -372,6 +420,19 @@ export default function Customers() {
               <div className="space-y-2">
                 <Label>Số điện thoại <span className="text-rose-600">*</span></Label>
                 <Input value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} placeholder="Nhập số điện thoại" />
+              </div>
+              <div className="space-y-2">
+                <Label>Đã cọc</Label>
+                <Input value={newCustomer.deposit || ''} onChange={handleNewDepositChange} placeholder="VD: 5.000.000 VNĐ" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ghi chú</Label>
+                <textarea 
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
+                  value={newCustomer.notes || ''} 
+                  onChange={e => setNewCustomer({...newCustomer, notes: e.target.value})} 
+                  placeholder="Nhập ghi chú khách hàng..."
+                />
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ quan tâm</Label>
@@ -491,6 +552,19 @@ export default function Customers() {
               <div className="space-y-2">
                 <Label>Số điện thoại</Label>
                 <Input value={editingCustomer.phone} onChange={e => setEditingCustomer({...editingCustomer, phone: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Đã cọc</Label>
+                <Input value={editingCustomer.deposit || ''} onChange={handleEditDepositChange} placeholder="VD: 5.000.000 VNĐ" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ghi chú</Label>
+                <textarea 
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#181a1b] dark:border-[#4a2b2d] dark:text-white"
+                  value={editingCustomer.notes || ''} 
+                  onChange={e => setEditingCustomer({...editingCustomer, notes: e.target.value})} 
+                  placeholder="Nhập ghi chú khách hàng..."
+                />
               </div>
               <div className="space-y-2">
                 <Label>Dịch vụ</Label>
@@ -633,7 +707,7 @@ export default function Customers() {
                     <Input type="date" value={editingCustomer.dischargeDate || ''} onChange={e => setEditingCustomer({...editingCustomer, dischargeDate: e.target.value})} />
                   </div>
 
-                  {(editingCustomer.status === 'Đã chốt' || editingCustomer.status === 'Hậu phẫu') && (
+                  {(editingCustomer.status === 'Đang tư vấn' || editingCustomer.status === 'Đã chốt' || editingCustomer.status === 'Hậu phẫu' || editingCustomer.status === 'Bảo hành') && (
                     <div className="space-y-2">
                       <Label>Chi phí chốt dịch vụ</Label>
                       <Input placeholder="VD: 15.000.000 VNĐ" value={editingCustomer.totalCost || ''} onChange={handleCostChange} />
@@ -680,8 +754,8 @@ export default function Customers() {
             </CardHeader>
             <CardContent className="overflow-y-auto space-y-4">
               <p className="text-gray-600 dark:text-rose-200 text-sm">
-                Khách hàng <strong className="text-gray-900 dark:text-white">{confirmScheduleModal.customer.name}</strong> vừa chuyển sang giai đoạn Hậu phẫu. 
-                Vui lòng xác nhận hoặc điều chỉnh các ngày tái khám:
+                Khách hàng <strong className="text-gray-900 dark:text-white">{confirmScheduleModal.customer.name}</strong> vừa chuyển sang giai đoạn {confirmScheduleModal.customer.status}. 
+                Vui lòng xác nhận hoặc điều chỉnh các ngày hẹn:
               </p>
               <div className="space-y-3 bg-gray-50 dark:bg-[#181a1b] p-4 rounded-lg border border-gray-100 dark:border-[#4a2b2d]">
                 <div className="space-y-1">

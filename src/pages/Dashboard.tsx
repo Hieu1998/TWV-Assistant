@@ -105,7 +105,7 @@ export default function Dashboard() {
                     format(date, 'yyyy');
       
       const total = customers.reduce((acc, c) => {
-        if (c.status !== 'Hậu phẫu' || !c.totalCost) return acc;
+        if ((c.status !== 'Hậu phẫu' && c.status !== 'Bảo hành') || !c.totalCost) return acc;
         const cDate = c.startDate ? parseISO(c.startDate) : new Date(c.createdAt);
         
         let match = false;
@@ -224,7 +224,7 @@ export default function Dashboard() {
               <TrendingUp className="w-5 h-5 mr-2" />
               Biểu đồ doanh thu
             </CardTitle>
-            <CardDescription className="text-xs font-medium">Doanh thu từ khách hàng đã thực hiện dịch vụ (Hậu phẫu)</CardDescription>
+            <CardDescription className="text-xs font-medium">Doanh thu từ khách hàng đã thực hiện dịch vụ (Hậu phẫu, Bảo hành)</CardDescription>
           </div>
           <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#181a1b] p-1 rounded-xl border border-gray-200 dark:border-[#4a2b2d]">
             {[

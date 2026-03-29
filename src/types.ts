@@ -1,4 +1,4 @@
-export type CustomerStatus = 'Tiềm năng' | 'Đang tư vấn' | 'Đã chốt' | 'Hậu phẫu';
+export type CustomerStatus = 'Tiềm năng' | 'Đang tư vấn' | 'Đã chốt' | 'Hậu phẫu' | 'Bảo hành';
 
 export interface Customer {
   id: string;
@@ -12,6 +12,7 @@ export interface Customer {
   appointments?: string[]; // Array of dates
   dischargeDate?: string;
   totalCost?: string;
+  deposit?: string;
   source?: string;
 }
 
