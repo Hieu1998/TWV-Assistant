@@ -39,23 +39,34 @@ export default function Layout() {
   const location = useLocation();
 
   useEffect(() => {
-    // Check for last backup date
-    const lastBackup = localStorage.getItem('crm_last_backup_date');
-    if (!lastBackup) {
-      // If no backup ever, show reminder after 7 days of first use
-      const firstUse = localStorage.getItem('crm_first_use_date');
-      if (!firstUse) {
-        localStorage.setItem('crm_first_use_date', new Date().toISOString());
+    const checkBackupStatus = () => {
+      const lastBackup = localStorage.getItem('crm_last_backup_date');
+      if (!lastBackup) {
+        // If no backup ever, show reminder after 7 days of first use
+        const firstUse = localStorage.getItem('crm_first_use_date');
+        if (!firstUse) {
+          localStorage.setItem('crm_first_use_date', new Date().toISOString());
+          setShowBackupReminder(false);
+        } else {
+          const daysSinceFirstUse = (new Date().getTime() - new Date(firstUse).getTime()) / (1000 * 60 * 60 * 24);
+          setShowBackupReminder(daysSinceFirstUse > 7);
+        }
       } else {
-        const daysSinceFirstUse = (new Date().getTime() - new Date(firstUse).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceFirstUse > 7) setShowBackupReminder(true);
+        const daysSinceLastBackup = (new Date().getTime() - new Date(lastBackup).getTime()) / (1000 * 60 * 60 * 24);
+        setShowBackupReminder(daysSinceLastBackup > 30);
       }
-    } else {
-      const daysSinceLastBackup = (new Date().getTime() - new Date(lastBackup).getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSinceLastBackup > 30) {
-        setShowBackupReminder(true);
-      }
-    }
+    };
+
+    checkBackupStatus();
+
+    const handleBackupCompleted = () => {
+      setShowBackupReminder(false);
+    };
+
+    window.addEventListener('backup_completed', handleBackupCompleted);
+    return () => {
+      window.removeEventListener('backup_completed', handleBackupCompleted);
+    };
   }, [location.pathname]);
 
   useEffect(() => {

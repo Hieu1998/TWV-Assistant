@@ -83,6 +83,12 @@ export default function Settings() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    // Update last backup date
+    localStorage.setItem('crm_last_backup_date', new Date().toISOString());
+    
+    // Dispatch a custom event so Layout can immediately hide the reminder
+    window.dispatchEvent(new Event('backup_completed'));
   };
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
